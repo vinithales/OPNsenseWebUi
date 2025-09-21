@@ -38,16 +38,20 @@ class UserService extends BaseService
                 }
             ]);
 
-            $body = $response->getBody();
-            Log::debug('Response Body: ' . $body); // Debugging line to inspect the raw response body
-            $data = json_decode($body, true);
-            print_r($data); // Debugging line to inspect the response structure
+            $statusCode = $response->getStatusCode(); // pega o código HTTP
+            $body = (string) $response->getBody();
+            Log::debug('Response Body: ' . $body);
 
-            if ($data['status'] === 'success') {
-                return $data['rows'];
+            if ($statusCode !== 200) {
+                throw new \Exception("Failed to fetch users: HTTP $statusCode");
             }
 
-            throw new \Exception('Failed to fetch users from OPNsense: ' . ($data['message'] ?? 'Unknown error'));
+            $data = json_decode($body, true);
+            if (!isset($data['rows'])) {
+                throw new \Exception('Invalid response structure');
+            }
+
+            return $data['rows'];
         } catch (\Exception $e) {
             Log::error('Error fetching users from OPNsense: ' . $e->getMessage());
             throw $e;
