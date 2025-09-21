@@ -18,13 +18,7 @@ class BaseService
         $baseUri = env('OPNSENSE_API_BASE_URL');
         $apiKey = env('OPNSENSE_API_KEY');
         $apiSecret = env('OPNSENSE_API_SECRET');
-        $stack = HandlerStack::create();
-        $stack->push(
-            Middleware::log(
-                new \Monolog\Logger('guzzle'),
-                new MessageFormatter('{method} {uri} HTTP/{version} {req_body} - {code} {res_body}')
-            )
-        );
+      
 
 
 
@@ -46,7 +40,6 @@ class BaseService
             ],
             'http_errors' => false,
             'allow_redirects' => false,
-            'handler' => $stack,
         ]);
     }
 }

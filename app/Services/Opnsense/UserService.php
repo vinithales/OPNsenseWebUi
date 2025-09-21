@@ -63,14 +63,36 @@ class UserService extends BaseService
     public function createUser(array $userData)
     {
         try {
-            $response = $this->client->post('auth/user/add', [
-                'json' => $userData
+            // Log da requisição enviada
+            Log::debug('Request Payload: ' . json_encode($userData));
+
+            $response = $this->client->post('/api/auth/user/add', [
+                'json' => $userData, // Remove json_encode() aqui - Guzzle já faz isso
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
+                }
             ]);
 
-            if ($response['result'] === 'saved') {
+            $body = $response->getBody()->getContents();
+            Log::debug('Response Body: ' . $body);
+
+            $data = json_decode($body, true);
+
+            if (isset($data['result']) && $data['result'] === 'saved') {
                 return true;
             }
-            throw new \Exception('Failed to create user: ' . ($response['validation'] ?? $response['result']));
+
+            // Captura detalhes de validação se disponíveis
+            $errorMessage = 'Failed to create user: ';
+            if (isset($data['validations'])) {
+                $errorMessage .= json_encode($data['validations']);
+            } elseif (isset($data['result'])) {
+                $errorMessage .= $data['result'];
+            } else {
+                $errorMessage .= 'Unknown error';
+            }
+
+            throw new \Exception($errorMessage);
         } catch (\Throwable $e) {
             Log::error('Error creating user in OPNsense: ' . $e->getMessage());
             throw $e;

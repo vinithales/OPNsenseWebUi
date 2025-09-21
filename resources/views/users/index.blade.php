@@ -162,7 +162,7 @@
             // Função para buscar usuários da API
             async function fetchUsers() {
                 try {
-                    const response = await fetch('/users/api');
+                    const response = await fetch('api/users');
                     const data = await response.json();
 
                     if (data.status === 'success') {

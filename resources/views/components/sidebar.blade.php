@@ -73,7 +73,7 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('painelusers') }}"
+                <a href="{{ route('users.index') }}"
                     class="flex items-center justify-between px-2 py-2 text-white bg-green-700 rounded-md">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 mr-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"

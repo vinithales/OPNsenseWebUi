@@ -36,22 +36,9 @@ class UserController extends Controller
         }
     }
 
-    public function index()
+    public function indexView()
     {
-        try {
-            $users = $this->userService->getUsers();
-
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'data' => $users]);
-            }
-
-            return view('users.index', compact('users'));
-        } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
-            return back()->with('error', $e->getMessage());
-        }
+        return view('users.index');
     }
 
     public function createView()
@@ -59,13 +46,47 @@ class UserController extends Controller
         return view('users.create');
     }
 
-    public function create(): View
+    public function apiCreate(Request $request)
     {
-        $groups = $this->groupService->getGroups();
-        return view('users.create', compact('groups'));
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'fullname' => 'required|string|max:255',
+                'email' => 'required|email',
+                'password' => 'required|confirmed|min:8',
+                'group' => 'required|string',
+                'comment' => 'nullable|string',
+                'expires' => 'nullable|date',
+                'user_shell' => 'nullable|string',
+                'authorizedkeys' => 'nullable|string'
+            ]);
+
+            $userData = [
+                'user' => [
+                    'name' => $validated['name'],
+                    'fullname' => $validated['fullname'],
+                    'email' => $validated['email'],
+                    'password' => $validated['password'],
+                    'group' => $validated['group'],
+                    'comment' => $validated['comment'] ?? '',
+                    'expires' => $validated['expires'] ?? '',
+                    'user.shell' => $validated['user_shell'] ?? '/sbin/nologin',
+                    'authorizedkeys' => $validated['authorizedkeys'] ?? ''
+                ]
+            ];
+
+            if ($this->userService->createUser($userData)) {
+                return redirect()->route('user.index')
+                    ->with('success', 'Usuário criado com sucesso!');
+            }
+
+            return back()->with('error', 'Falha na criação do usuário');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        }
     }
-
-
     public function store(Request $request)
     {
         try {

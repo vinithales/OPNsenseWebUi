@@ -31,13 +31,13 @@ Route::get('/', function () {
 
 //Route::middleware(['auth'])->group(function () {
 // Users
+//api
+Route::get('api/users', [UserController::class, 'apiIndex'])->name('users.api.index');
+Route::post('/user/create', action: [UserController::class, 'apiCreate'])->name('users.api.create');
 
-Route::get('/users/api', [UserController::class, 'apiIndex'])->name('users.api.index');
 
-Route::get('/painelusers', function () {
-    return view('users.index');
-})->name('painelusers');
-Route::get('/users', [UserController::class, 'index'])->name('users.index');
+
+Route::get('/users', [UserController::class, 'indexView'])->name('users.index');
 Route::get('/users/create', [UserController::class, 'createView'])->name('users.create');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
 Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
