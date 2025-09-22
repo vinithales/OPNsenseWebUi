@@ -7,6 +7,7 @@ use App\Services\Opnsense\GroupService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -62,7 +63,7 @@ class UserController extends Controller
                 'authorizedkeys' => 'nullable|string'
             ]);
 
-             $groupMemberships = implode(',', $validated['group']);
+            $groupMemberships = implode(',', $validated['group']);
 
             $userData = [
                 'user' => [
@@ -90,6 +91,23 @@ class UserController extends Controller
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
+
+    public function apiDestroy(string $id)
+    {
+        try {
+            $result = $this->userService->deleteUser($id);
+
+            if ($result === true || $result === 'true') {
+                return response()->json(['status' => 'success', 'message' => 'User deleted successfully']);
+            }
+
+            return response()->json(['status' => 'error', 'message' => 'Falha na exclusão do usuário'], 400);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+
     public function store(Request $request)
     {
         try {
@@ -155,24 +173,6 @@ class UserController extends Controller
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
             }
             return back()->with('error', $e->getMessage())->withInput();
-        }
-    }
-
-    public function destroy(string $id)
-    {
-        try {
-            $result = $this->userService->deleteUser($id);
-
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'message' => 'User deleted successfully']);
-            }
-
-            return redirect()->route('users.index')->with('success', 'User deleted successfully');
-        } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
-            return back()->with('error', $e->getMessage());
         }
     }
 }

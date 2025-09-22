@@ -35,6 +35,8 @@ Route::get('/', function () {
 Route::get('api/users', [UserController::class, 'apiIndex'])->name('users.api.index');
 Route::post('/user/create', action: [UserController::class, 'apiCreate'])->name('users.api.create');
 Route::get('api/groups', [GroupController::class, 'apiIndex'])->name('groups.api.index');
+Route::delete('api/users/{user}', [UserController::class, 'apiDestroy'])->name('users.api.destroy');
+
 
 
 Route::get('/users', [UserController::class, 'indexView'])->name('users.index');
@@ -42,7 +44,6 @@ Route::get('/users/create', [UserController::class, 'createView'])->name('users.
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
 Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
 Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
 // Groups
 Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');

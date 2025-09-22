@@ -120,13 +120,23 @@ class UserService extends BaseService
     public function deleteUser($userId)
     {
         try {
-            $response = $this->client->post('auth/user/del/{$userId}');
 
-            if ($response['result'] === 'deleted') {
-                return true;
-            }
+            $response = $this->client->post("/api/auth/user/del/{$userId}", [
+                'json' => [],
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
+                }
+            ]);
 
-            throw new \Exception('Failed to delete user: ' . ($response['message'] ?? 'Unknown error'));
+            $body = (string) $response->getBody();
+            Log::debug('Response Body: ' . $body);
+            $data = json_decode($body, true);
+
+           if (isset($data['result']) && $data['result'] === 'deleted') {
+            return true;
+        }
+
+            throw new \Exception('Failed to delete user: ' . ($data['result'] ?? 'Unknown error'));
         } catch (\Throwable $e) {
             Log::error('Error deleting user in OPNsense: ' . $e->getMessage());
             throw $e;
