@@ -60,14 +60,14 @@
 
                         {{-- Nível de Acesso --}}
                         <div>
-                            <label for="group" class="block text-sm font-medium text-gray-700">Nível de Acesso</label>
-                            <select id="group" name="group"
+                            <label for="group" class="block text-sm font-medium text-gray-700">Nível de Acesso
+                                (Grupo)</label>
+
+                            <select id="group" name="group[]" multiple
                                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                {{-- Os valores (values) devem corresponder ao que a sua API espera --}}
-                                <option value="0">Visualizador</option>
-                                <option value="admins">Operador</option>
-                                <option value="is_admin">Administrador</option>
                             </select>
+
+                            <p class="mt-2 text-xs text-gray-500">Comece a digitar para buscar ou selecione na lista.</p>
                         </div>
                     </div>
 
@@ -177,4 +177,74 @@
             @endif
         </div>
     </div>
+    <script>
+        // Script para esconder as mensagens de sucesso/erro após alguns segundos
+        document.addEventListener('DOMContentLoaded', function() {
+            const successMessage = document.querySelector('.bg-green-500');
+            const errorMessage = document.querySelector('.bg-red-500');
+
+            if (successMessage) {
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000); // Esconde após 5 segundos
+            }
+            if (errorMessage) {
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000); // Esconde após 5 segundos
+            }
+
+
+            async function fetchGroupDataAndInitSelect() {
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/api/groups');
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        const groupSelect = document.getElementById('group');
+
+                        // ADICIONE ESTA VERIFICAÇÃO
+                        if (!groupSelect) {
+                            console.error('Elemento <select id="group"> não foi encontrado na página.');
+                            return; // Para a execução da função se o elemento não existe
+                        }
+
+                        groupSelect.innerHTML = ''; // Agora esta linha é segura
+
+                        data.rows.forEach(group => {
+                            const option = document.createElement('option');
+                            option.value = group.gid;
+                            option.textContent = group.name;
+                            groupSelect.appendChild(option);
+                        });
+
+                        // Inicializa o Tom Select
+                        new TomSelect(groupSelect, { // Pode passar o elemento diretamente
+                            plugins: ['remove_button'],
+                            placeholder: 'Selecione um ou mais grupos...',
+                        });
+
+                    } else {
+                        console.error('Erro ao buscar grupos:', data.message);
+                    }
+                } catch (error) {
+                    console.error('Erro na requisição:', error);
+                }
+            }
+
+            fetchGroupDataAndInitSelect();
+
+        });
+
+        //validação de senha
+        document.querySelector('form').addEventListener('submit', function(event) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('password_confirmation').value;
+
+            if (password !== confirmPassword) {
+                event.preventDefault();
+                alert('As senhas não coincidem. Por favor, verifique e tente novamente.');
+            }
+        });
+    </script>
 @endsection

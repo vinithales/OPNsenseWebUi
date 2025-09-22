@@ -9,7 +9,7 @@ class UserService extends BaseService
     public function getUser($userId)
     {
         try {
-            $response = $this->client->get("auth/user/get/{$userId}");
+            $response = $this->client->get("/api/auth/user/get/{$userId}");
             if (isset($response['user'])) {
                 return $response['user'];
             }

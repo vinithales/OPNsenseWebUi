@@ -19,21 +19,19 @@ class GroupController extends Controller
         $this->permissionService = $permissionService;
     }
 
-    public function index()
+    public function apiIndex()
     {
         try {
             $groups = $this->groupService->getGroups();
-
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'data' => $groups]);
-            }
-
-            return view('groups.index', compact('groups'));
+            return response()->json([
+                'status' => 'success',
+                'rows' => $groups
+            ]);
         } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
-            return back()->with('error', $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 

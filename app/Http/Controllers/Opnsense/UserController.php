@@ -54,12 +54,15 @@ class UserController extends Controller
                 'fullname' => 'required|string|max:255',
                 'email' => 'required|email',
                 'password' => 'required|confirmed|min:8',
-                'group' => 'required|string',
+                'group' => 'required|array',
+                'group.*' => 'string',
                 'comment' => 'nullable|string',
                 'expires' => 'nullable|date',
                 'user_shell' => 'nullable|string',
                 'authorizedkeys' => 'nullable|string'
             ]);
+
+             $groupMemberships = implode(',', $validated['group']);
 
             $userData = [
                 'user' => [
@@ -67,7 +70,7 @@ class UserController extends Controller
                     'fullname' => $validated['fullname'],
                     'email' => $validated['email'],
                     'password' => $validated['password'],
-                    'group' => $validated['group'],
+                    'group_memberships' => $groupMemberships,
                     'comment' => $validated['comment'] ?? '',
                     'expires' => $validated['expires'] ?? '',
                     'user.shell' => $validated['user_shell'] ?? '/sbin/nologin',
@@ -76,7 +79,7 @@ class UserController extends Controller
             ];
 
             if ($this->userService->createUser($userData)) {
-                return redirect()->route('user.index')
+                return redirect()->route('users.index')
                     ->with('success', 'Usuário criado com sucesso!');
             }
 

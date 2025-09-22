@@ -5,7 +5,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\Opnsense\UserController;
 use App\Http\Controllers\Opnsense\GroupController;
 use App\Http\Controllers\Opnsense\PermissionController;
-
+use PHPUnit\Framework\Attributes\Group;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,7 +34,7 @@ Route::get('/', function () {
 //api
 Route::get('api/users', [UserController::class, 'apiIndex'])->name('users.api.index');
 Route::post('/user/create', action: [UserController::class, 'apiCreate'])->name('users.api.create');
-
+Route::get('api/groups', [GroupController::class, 'apiIndex'])->name('groups.api.index');
 
 
 Route::get('/users', [UserController::class, 'indexView'])->name('users.index');

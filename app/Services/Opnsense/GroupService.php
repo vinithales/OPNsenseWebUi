@@ -10,18 +10,26 @@ class GroupService extends BaseService
     public function getGroups()
     {
         try {
-            $response = $this->client->get('auth/group/search', [
+            $response = $this->client->post('/api/auth/group/search', [
+                'json' => [],
                 'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
                     Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
                 }
             ]);
-            $data = json_decode($response->getBody()->getContents(), true);
 
-            if ($data['status'] === 'success') {
-                return $data['rows'];
+            $statusCode = $response->getStatusCode();
+            $body = (string) $response->getBody();
+            Log::debug('Response Body: ' . $body);
+            if ($statusCode !== 200) {
+                throw new \Exception("Failed to fetch groups: HTTP $statusCode");
             }
 
-            throw new \Exception('Failed to fetch groups from OPNsense: ' . ($data['message'] ?? 'Unknown error'));
+            $data = json_decode($body, true);
+            if (!isset($data['rows'])) {
+                throw new \Exception('Invalid response structure');
+            }
+
+            return $data['rows'];
         } catch (\Exception $e) {
             Log::error('Error fetching groups from OPNsense: ' . $e->getMessage());
             throw $e;

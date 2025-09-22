@@ -2,6 +2,7 @@
 
 namespace App\Services\Opnsense;
 
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
@@ -11,9 +12,8 @@ class PermissionService extends BaseService
 {
     protected $groupService;
 
-    public function __construct($client, GroupService $groupService)
+    public function __construct( GroupService $groupService)
     {
-        parent::__construct($client);
         $this->groupService = $groupService;
     }
     /**
