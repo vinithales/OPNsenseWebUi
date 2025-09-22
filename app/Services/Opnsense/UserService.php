@@ -9,19 +9,29 @@ class UserService extends BaseService
     public function getUser($userId)
     {
         try {
-            $response = $this->client->get("/api/auth/user/get/{$userId}");
-            if (isset($response['user'])) {
-                return $response['user'];
+            $response = $this->client->post("/api/auth/user/get/{$userId}", [
+                'json' => [],
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
+                }
+            ]);
+
+            $body = $response->getBody()->getContents();
+            $data = json_decode($body, true);
+
+            if (!is_array($data) || !isset($data['user'])) {
+                Log::warning("Resposta inesperada ao buscar usuário {$userId}: " . $body);
+                return null;
             }
 
-            // Fallback: search in all users
-            $allUsers = $this->getUsers();
-            foreach ($allUsers as $user) {
-                if (isset($user['uuid']) && $user['uuid'] === $userId) {
-                    return $user;
-                }
+            $user = $data['user'];
+
+            if (!isset($user['uid']) || !isset($user['name'])) {
+                Log::info("Usuário {$userId} não encontrado ou dados incompletos.");
+                return null;
             }
-            return null;
+
+            return $user;
         } catch (\Exception $e) {
             Log::error("Error fetching user {$userId}: " . $e->getMessage());
             throw $e;
@@ -57,8 +67,6 @@ class UserService extends BaseService
             throw $e;
         }
     }
-
-
 
     public function createUser(array $userData)
     {
@@ -132,13 +140,44 @@ class UserService extends BaseService
             Log::debug('Response Body: ' . $body);
             $data = json_decode($body, true);
 
-           if (isset($data['result']) && $data['result'] === 'deleted') {
-            return true;
-        }
+            if (isset($data['result']) && $data['result'] === 'deleted') {
+                return true;
+            }
 
             throw new \Exception('Failed to delete user: ' . ($data['result'] ?? 'Unknown error'));
         } catch (\Throwable $e) {
             Log::error('Error deleting user in OPNsense: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function findUserByName($name)
+    {
+        try {
+            $response = $this->client->post('/api/auth/user/search', [
+                'json' => [],
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
+                }
+            ]);
+
+
+            $body = (string) $response->getBody();
+            Log::debug('Response Body: ' . $body);
+            $data = json_decode($body, true);
+
+
+            if (isset($data['rows']) && is_array($data['rows'])) {
+                foreach ($data['rows'] as $user) {
+                    if (isset($user['name']) && $user['name'] === $name) {
+                        return $user;
+                    }
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Error searching user by name in OPNsense: ' . $e->getMessage());
             throw $e;
         }
     }

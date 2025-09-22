@@ -96,7 +96,7 @@ class GroupService extends BaseService
                 return $response['group'];
             }
             // Fallback: busca todos os grupos e filtra
-            $allGroups = $this->getAllGroups();
+            $allGroups = $this->getGroups();
             foreach ($allGroups as $group) {
                 if (isset($group['uuid']) && $group['uuid'] === $groupId) {
                     return $group;
@@ -109,20 +109,32 @@ class GroupService extends BaseService
         }
     }
 
-    /**
-     * Busca todos os grupos do sistema
-     */
-    public function getAllGroups()
+
+    public function findGroupByName($groupName)
     {
         try {
-            $response = $this->client->get('/api/auth/group/search');
-            if (isset($response['rows'])) {
-                return $response['rows'];
+            $response = $this->client->post('/api/auth/group/search', [
+                'json' => [],
+            ]);
+
+            $body = (string) $response->getBody();
+            $data = json_decode($body, true);
+
+            if (isset($data['rows'])) {
+                foreach ($data['rows'] as $group) {
+                    if (isset($group['name']) && $group['name'] === $groupName) {
+                        return $group;
+                    }
+                    if (is_numeric($groupName) && isset($group['gid']) && $group['gid'] == $groupName) {
+                        return $group;
+                    }
+                }
             }
-            return [];
+
+            return null;
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar grupos: ' . $e->getMessage());
-            return [];
+            Log::error('Error finding group by name: ' . $e->getMessage());
+            return null;
         }
     }
 }
