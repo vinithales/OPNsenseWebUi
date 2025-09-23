@@ -26,7 +26,7 @@
                 </a>
             </li>
             <li>
-                <a href="#"
+                <a href="{{ route('firewall.index') }}"
                     class="flex items-center justify-between px-2 py-2 text-gray-300 rounded-md hover:bg-gray-700">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"

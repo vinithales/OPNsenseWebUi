@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Opnsense;
+namespace App\Http\Controllers\Opnsense\Auth;
 
 use App\Services\Opnsense\GroupService;
 use App\Services\Opnsense\PermissionService;

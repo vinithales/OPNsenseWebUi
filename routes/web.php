@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\Opnsense\UserController;
-use App\Http\Controllers\Opnsense\GroupController;
-use App\Http\Controllers\Opnsense\PermissionController;
+use App\Http\Controllers\Opnsense\Auth\UserController;
+use App\Http\Controllers\Opnsense\Auth\GroupController;
+use App\Http\Controllers\Opnsense\Auth\PermissionController;
+use App\Http\Controllers\Opnsense\Firewall\FirewallController;
 use PHPUnit\Framework\Attributes\Group;
 
 /*
@@ -61,4 +62,23 @@ Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('gro
 Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
 Route::post('/permissions/groups/{group}/assign', [PermissionController::class, 'assignPrivilegesToGroup'])
     ->name('permissions.assign');
+
+
+
+
+//Firewall
+
+Route::get('/firewall', [FirewallController::class, 'index'])->name('firewall.index');
+
+
+
+
+
+
+
+
 //});
+
+
+
+
