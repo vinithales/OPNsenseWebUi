@@ -17,7 +17,9 @@ class UserService extends BaseService
             ]);
 
             $body = $response->getBody()->getContents();
+            Log::debug("Retonro de busca especifica:" .$body);
             $data = json_decode($body, true);
+
 
             if (!is_array($data) || !isset($data['user'])) {
                 Log::warning("Resposta inesperada ao buscar usuário {$userId}: " . $body);
@@ -111,9 +113,14 @@ class UserService extends BaseService
     {
         try {
 
-            $response = $this->client->post('auth/user/set/{$userId}', [
-                'json' => $userData
+            $response = $this->client->post('/api/auth/user/set/{$userId}', [
+                'json' => $userData,
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
+                }
             ]);
+
+            Log::debug('RETORNO DA ATT:'. $response);
 
             if ($response['result'] === 'saved') {
                 return true;

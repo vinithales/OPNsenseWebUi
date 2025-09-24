@@ -35,21 +35,22 @@ class UserController extends Controller
         return view('users.create');
     }
 
-    public function editView(string $id)
+    public function editView(string $uuid)
     {
         try {
-            $data = $this->userService->getUser($id);
+            $user = $this->userService->getUser($uuid);
             $groups = $this->groupService->getGroups();
 
-            if (!$data) {
+            if (!$user) {
                 return redirect()->route('users.index')->with('error', 'User not found');
             }
 
-            $user = $data['user'];
+            $user['uuid'] = $uuid;
 
-            return view('users.edit', compact('user', 'groups'));
+            return view('users.show', compact('user', 'groups'));
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            Log::debug('ERRO DO EDIT AQUI:' . $e->getMessage());
+            return back()->with('error do edit', $e->getMessage());
         }
     }
 
@@ -138,15 +139,39 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validate([
-                'username' => 'required|string',
-                'password' => 'nullable|string',
+                'name' => 'required|string', // Na view é 'name', no service é 'username'
+                'password' => 'nullable|string|confirmed|min:6',
                 'email' => 'nullable|email',
-                'fullname' => 'nullable|string',
+                'descr' => 'nullable|string', // Na view é 'descr', no service é 'fullname'
+                'expires' => 'nullable|date',
+                'authorizedkeys' => 'nullable|string',
+                'disabled' => 'nullable|boolean',
+                'shell' => 'nullable|string',
+                'language' => 'nullable|string',
                 'groups' => 'nullable|array',
-                'groups.*' => 'string'
+                'groups.*' => 'string',
+                'priv' => 'nullable|array',
+                'priv.*' => 'string'
             ]);
 
-            $result = $this->userService->updateUser($id, $validated);
+            Log::debug('UUID da URL: ' . $id);
+            Log::debug('Dados do request: ', $request->all());
+            // Mapear os campos da view para o formato do service
+            $userData = [
+                'name' => $validated['name'], // Mapear 'name' para 'username'
+                'password' => $validated['password'] ?? null,
+                'email' => $validated['email'] ?? null,
+                'fullname' => $validated['descr'] ?? null, // Mapear 'descr' para 'fullname'
+                'expires' => $validated['expires'] ?? null,
+                'authorizedkeys' => $validated['authorizedkeys'] ?? null,
+                'disabled' => $validated['disabled'] ?? false,
+                'user.shell' => $validated['shell'] ?? null,
+                'language' => $validated['language'] ?? null,
+                'groups' => $validated['groups'] ?? [],
+                'priv' => $validated['priv'] ?? []
+            ];
+
+            $result = $this->userService->updateUser($id, $userData);
 
             if (request()->wantsJson()) {
                 return response()->json(['status' => 'success', 'message' => 'User updated successfully']);

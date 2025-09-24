@@ -236,6 +236,8 @@
                         .toUpperCase()
                         .substring(0, 2);
 
+                    let editUrl = "{{ route('users.edit', ['uuid' => '__UUID__']) }}".replace('__UUID__', user.uuid);
+
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
@@ -261,7 +263,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="{{ route('users.edit', ['user' => ${user.uuid}]) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a>
+                            <a href="${editUrl}" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a>
                             <button class="text-red-600 hover:text-red-900" onclick="deleteUser('${user.uuid}')">Excluir</button>
                         </td>
                     `;

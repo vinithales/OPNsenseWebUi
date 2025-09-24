@@ -45,7 +45,8 @@ Route::get('/users/import', [UserController::class, 'importView'])->name('users.
 
 Route::get('/users', [UserController::class, 'indexView'])->name('users.index');
 Route::get('/users/create', [UserController::class, 'createView'])->name('users.create');
-Route::get('/users/{user}/edit', [UserController::class, 'editView'])->name('users.edit');
+Route::get('/users/{uuid}/edit', [UserController::class, 'editView'])->name('users.edit');
+Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
 
 
 
