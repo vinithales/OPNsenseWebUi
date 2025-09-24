@@ -35,6 +35,12 @@ class GroupController extends Controller
         }
     }
 
+
+    public function indexView()
+    {
+        return view('group.index');
+    }
+
     public function create()
     {
         $privileges = $this->permissionService->getAvailablePrivileges();

@@ -52,7 +52,7 @@ Route::put('/users/{user}', [UserController::class, 'update'])->name('users.upda
 
 
 // Groups
-Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+Route::get('/groups', [GroupController::class, 'indexView'])->name('groups.index');
 Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
 Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
