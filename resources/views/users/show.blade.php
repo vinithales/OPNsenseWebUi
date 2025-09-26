@@ -55,7 +55,7 @@
             </div>
 
             {{-- Formulário --}}
-            <form action="{{ route('users.update', $user['name']) }}" method="POST" class="p-8">
+            <form action="{{ route('users.update', $user['uuid']) }}" method="POST" class="p-8">
                 @csrf
                 @method('PUT')
 

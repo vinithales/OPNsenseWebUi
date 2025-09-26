@@ -135,7 +135,7 @@ class UserController extends Controller
         }
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $uuid)
     {
         try {
             $validated = $request->validate([
@@ -154,7 +154,9 @@ class UserController extends Controller
                 'priv.*' => 'string'
             ]);
 
-            Log::debug('UUID da URL: ' . $id);
+            Log::debug('CHEGOU NA CONTROLLER');
+
+            Log::debug('UUID da URL: ' . $uuid);
             Log::debug('Dados do request: ', $request->all());
             // Mapear os campos da view para o formato do service
             $userData = [
@@ -171,7 +173,7 @@ class UserController extends Controller
                 'priv' => $validated['priv'] ?? []
             ];
 
-            $result = $this->userService->updateUser($id, $userData);
+            $result = $this->userService->updateUser($uuid, $userData);
 
             if (request()->wantsJson()) {
                 return response()->json(['status' => 'success', 'message' => 'User updated successfully']);
@@ -180,9 +182,11 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('success', 'User updated successfully');
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
+                Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER IF ERRO:' .$e->getMessage());
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
             }
             return back()->with('error', $e->getMessage())->withInput();
+                Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER:' .$e->getMessage());
         }
     }
 

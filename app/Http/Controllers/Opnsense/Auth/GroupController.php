@@ -19,13 +19,13 @@ class GroupController extends Controller
         $this->permissionService = $permissionService;
     }
 
-    public function apiIndex()
+    public function index()
     {
         try {
             $groups = $this->groupService->getGroups();
             return response()->json([
                 'status' => 'success',
-                'rows' => $groups
+                'data' => $groups
             ]);
         } catch (\Exception $e) {
             return response()->json([

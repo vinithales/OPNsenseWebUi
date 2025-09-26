@@ -46,7 +46,7 @@ Route::get('/users/import', [UserController::class, 'importView'])->name('users.
 Route::get('/users', [UserController::class, 'indexView'])->name('users.index');
 Route::get('/users/create', [UserController::class, 'createView'])->name('users.create');
 Route::get('/users/{uuid}/edit', [UserController::class, 'editView'])->name('users.edit');
-Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+Route::put('/users/{uuid}', [UserController::class, 'update'])->name('users.update');
 
 
 
@@ -58,6 +58,9 @@ Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
 Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
 Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
 Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+Route::get('api/groups', [GroupController::class, 'index'])->name('groups.api.index');
+
+
 
 // Permissions
 Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
