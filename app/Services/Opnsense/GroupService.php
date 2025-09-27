@@ -39,19 +39,38 @@ class GroupService extends BaseService
     public function createGroup(array $groupData)
     {
         try {
-            $response = $this->client->post('auth/group/add', [
-                'json' => $groupData
+            $response = $this->client->post('/api/auth/group/add', [
+                'json' => $groupData,
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
+                }
             ]);
 
-            if ($response['result'] === 'saved') {
+            $statusCode = $response->getStatusCode();
+            $body = $response->getBody()->getContents();
+
+            $data = json_decode($body, true);
+
+            if ($statusCode !== 200) {
+                throw new \Exception("HTTP $statusCode - " . ($data['message'] ?? 'Unknown error'));
+            }
+
+            if (isset($data['result']) && $data['result'] === 'saved') {
+                Log::info('Group created successfully');
                 return true;
             }
-            throw new \Exception('Failed to create group: ' . ($response['validation'] ?? $response['result']));
+
+            Log::error('Group creation failed with response:', $data);
+            throw new \Exception('Failed to create group: ' . json_encode($data));
         } catch (\Throwable $e) {
-            Log::error('Error creating group in OPNsense: ' . $e->getMessage());
+            Log::error('Error creating group in OPNsense', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }
+
 
     public function updateGroup($groupId, array $groupData)
     {

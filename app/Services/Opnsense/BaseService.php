@@ -18,17 +18,8 @@ class BaseService
         $baseUri = env('OPNSENSE_API_BASE_URL');
         $apiKey = env('OPNSENSE_API_KEY');
         $apiSecret = env('OPNSENSE_API_SECRET');
-      
 
 
-
-
-        // Log das configurações (remova em produção)
-        Log::debug('OPNSense API Configuration', [
-            'base_uri' => $baseUri,
-            'api_key' => $apiKey,
-            'api_secret' => substr($apiSecret, 0, 5) . '...' // Log parcial por segurança
-        ]);
 
         $this->client = new Client([
             'base_uri' => $baseUri,

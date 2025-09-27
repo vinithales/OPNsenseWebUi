@@ -19,38 +19,33 @@ class PermissionController extends Controller
     public function index()
     {
         try {
-            $privileges = $this->permissionService->getAvailablePrivileges();
+            $result = $this->permissionService->fetchPrivileges();
 
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'data' => $privileges]);
-            }
+            $privileges = $result['privileges'];
 
-            return view('permissions.index', compact('privileges'));
+            $filteredPrivileges = collect($privileges)
+                ->map(function ($privilege) {
+                    return [
+                        'id' => $privilege['id'],
+                        'name' => $privilege['name']
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $filteredPrivileges
+            ]);
         } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
-            return back()->with('error', $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
-    public function getAvailablePrivileges()
-    {
-        try {
-            $privileges = $this->permissionService->getAvailablePrivileges();
 
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'data' => $privileges]);
-            }
-
-            return $privileges;
-        } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
-            throw $e;
-        }
-    }
 
     public function fetchPrivileges()
     {

@@ -12,29 +12,10 @@ class PermissionService extends BaseService
 {
     protected $groupService;
 
-    public function __construct( GroupService $groupService)
+    public function __construct(GroupService $groupService)
     {
+        parent::__construct();
         $this->groupService = $groupService;
-    }
-    /**
-     * Lista local de privilégios como fallback
-     */
-    public function getAvailablePrivileges()
-    {
-        return [
-            'page-all' => 'Acesso completo',
-            'page-system' => 'Sistema',
-            'page-system-advanced' => 'Sistema: Configurações avançadas',
-            'page-system-usermanagement' => 'Sistema: Gerenciamento de usuários',
-            'page-diagnostics' => 'Diagnósticos',
-            'page-services' => 'Serviços',
-            'page-vpn' => 'VPN',
-            'page-firewall' => 'Firewall',
-            'page-captiveportal' => 'Portal Cativo',
-            'gui-zenarmor-dashboard' => 'Zenarmor: Dashboard/Reports',
-            'user-shell-access' => 'Acesso ao shell',
-            'page-intrusion-detection' => 'Detecção de intrusão'
-        ];
     }
 
     /**
@@ -42,41 +23,41 @@ class PermissionService extends BaseService
      */
     public function fetchPrivileges()
     {
-        return Cache::remember('opnsense_privileges', 3600, function () {
-            try {
-                $endpoints = [
-                    '/api/auth/user/get',
-                    '/api/auth/group/get',
-                    '/api/auth/user/getOption/privileges'
-                ];
-
-                foreach ($endpoints as $endpoint) {
-                    try {
-                        $response = $this->client->get($endpoint);
-
-                        if (isset($response['options']['privileges'])) {
-                            return $response['options']['privileges'];
-                        }
-
-                        if (isset($response['privileges'])) {
-                            return $response['privileges'];
-                        }
-
-                        if (isset($response['options']) && is_array($response['options'])) {
-                            return $response['options'];
-                        }
-                    } catch (\Exception $e) {
-                        Log::debug("Endpoint {$endpoint} falhou: " . $e->getMessage());
-                        continue;
-                    }
+        try {
+            $response = $this->client->post('/api/auth/priv/search', [
+                'json' => [],
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL previlegios: ' . $stats->getEffectiveUri());
                 }
+            ]);
 
-                throw new \Exception("Nenhum endpoint retornou dados de privilégios válidos");
-            } catch (\Exception $e) {
-                Log::warning("Falha ao buscar privilégios da API: " . $e->getMessage());
-                return $this->getAvailablePrivileges();
+            $statusCode = $response->getStatusCode();
+            $body = (string) $response->getBody();
+           // Log::debug('Response Body: ' . $body);
+
+            if ($statusCode !== 200) {
+                throw new \Exception("Failed to fetch privileges: HTTP $statusCode");
             }
-        });
+
+            $data = json_decode($body, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid JSON response: ' . json_last_error_msg());
+            }
+
+            if (!isset($data['rows']) || !is_array($data['rows'])) {
+                throw new \Exception('Invalid response structure: missing or invalid "rows" key');
+            }
+
+            return [
+                'privileges' => $data['rows'],
+                'total' => $data['total'] ?? count($data['rows']),
+                'current_page' => $data['current'] ?? 1
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Error fetching privileges from OPNsense: ' . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**
@@ -112,12 +93,11 @@ class PermissionService extends BaseService
 
             // Tratamento de erro detalhado
             $errorMsg = $response['validation_errors'] ??
-                       $response['validation'] ??
-                       $response['result'] ??
-                       'Erro desconhecido';
+                $response['validation'] ??
+                $response['result'] ??
+                'Erro desconhecido';
 
             throw new \Exception('Falha ao atribuir permissões: ' . json_encode($errorMsg));
-
         } catch (\Exception $e) {
             Log::error('Erro ao atribuir permissões no OPNsense: ' . $e->getMessage());
             throw $e;

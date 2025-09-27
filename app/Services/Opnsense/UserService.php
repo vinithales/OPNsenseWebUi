@@ -84,7 +84,7 @@ class UserService extends BaseService
             ]);
 
             $body = $response->getBody()->getContents();
-            Log::debug('Response Body: ' . $body);
+            //Log::debug('Response Body: ' . $body);
 
             $data = json_decode($body, true);
 
@@ -92,7 +92,6 @@ class UserService extends BaseService
                 return true;
             }
 
-            // Captura detalhes de validação se disponíveis
             $errorMessage = 'Failed to create user: ';
             if (isset($data['validations'])) {
                 $errorMessage .= json_encode($data['validations']);

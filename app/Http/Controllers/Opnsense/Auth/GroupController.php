@@ -41,42 +41,47 @@ class GroupController extends Controller
         return view('group.index');
     }
 
-    public function create()
+    public function createView()
     {
-        $privileges = $this->permissionService->getAvailablePrivileges();
-        return view('groups.create', compact('privileges'));
+        return view('group.create');
     }
+
 
     public function store(Request $request)
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string',
-                'description' => 'nullable|string',
-                'privileges' => 'nullable|array',
-                'privileges.*' => 'string'
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string|max:500',
+                'priv' => 'nullable|array',
+                'priv.*' => 'string',
+                'members' => 'nullable|array',
+                'members.*' => 'string'
             ]);
 
-            // Convert privileges array to comma-separated string
-            if (isset($validated['privileges'])) {
-                $validated['priv'] = implode(',', $validated['privileges']);
-                unset($validated['privileges']);
+            $groupData = [
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? '',
+            ];
+
+            if (!empty($validated['priv'])) {
+                $groupData['priv'] = implode(',', $validated['priv']);
             }
 
-            $result = $this->groupService->createGroup($validated);
-
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'message' => 'Group created successfully'], 201);
+            if (!empty($validated['members'])) {
+                $groupData['member'] = implode(',', $validated['members']);
+            }
+            if ($this->groupService->createGroup(['group' => $groupData])) {
+                return redirect()->route('groups.index')
+                    ->with('success', 'Grupo criado com sucesso!');
             }
 
-            return redirect()->route('groups.index')->with('success', 'Group created successfully');
+            return back()->with('error', 'Falha na criação do Grupo')->withInput();
         } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
+
 
     public function edit(string $id)
     {

@@ -211,7 +211,7 @@
 
                         groupSelect.innerHTML = ''; // Agora esta linha é segura
 
-                        data.rows.forEach(group => {
+                        data.data.forEach(group => {
                             const option = document.createElement('option');
                             option.value = group.gid;
                             option.textContent = group.name;

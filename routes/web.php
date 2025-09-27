@@ -35,7 +35,6 @@ Route::get('/', function () {
 //api
 Route::get('api/users', [UserController::class, 'apiIndex'])->name('users.api.index');
 Route::post('/user/create', action: [UserController::class, 'apiCreate'])->name('users.api.create');
-Route::get('api/groups', [GroupController::class, 'apiIndex'])->name('groups.api.index');
 Route::delete('api/users/{user}', [UserController::class, 'apiDestroy'])->name('users.api.destroy');
 
 Route::get('/users/import/template', [UserController::class, 'downloadTemplate'])->name('users.import.template');
@@ -53,7 +52,7 @@ Route::put('/users/{uuid}', [UserController::class, 'update'])->name('users.upda
 
 // Groups
 Route::get('/groups', [GroupController::class, 'indexView'])->name('groups.index');
-Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
+Route::get('/groups/create', [GroupController::class, 'createView'])->name('groups.create');
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
 Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
 Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
@@ -63,9 +62,11 @@ Route::get('api/groups', [GroupController::class, 'index'])->name('groups.api.in
 
 
 // Permissions
-Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+Route::get('/permissions', [PermissionController::class, 'indexView'])->name('permissions.index');
 Route::post('/permissions/groups/{group}/assign', [PermissionController::class, 'assignPrivilegesToGroup'])
     ->name('permissions.assign');
+
+Route::get('api/permissions', [PermissionController::class, 'index'])->name('permission.api.index');
 
 
 
