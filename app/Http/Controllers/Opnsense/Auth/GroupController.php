@@ -121,12 +121,10 @@ class GroupController extends Controller
             ];
 
             if (isset($validated['priv'])) {
-                // vírgula entre os privilégios
                 $data['group']['priv'] = implode(',', $validated['priv']);
             }
 
             if (isset($validated['members'])) {
-                // vírgula entre os IDs de membro
                 $data['group']['member'] = implode(',', $validated['members']);
             }
             Log::debug('Payload enviado: ' . json_encode($data));
@@ -138,7 +136,7 @@ class GroupController extends Controller
             }
 
 
-            return redirect()->route('groups.index')->with('success', 'Group updated successfully');
+            return redirect()->route('groups.index')->with('Error', 'Error update Group');
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);

@@ -108,27 +108,32 @@ class UserService extends BaseService
     public function updateUser(string $userId, array $userData)
     {
         try {
+            Log::info('Tentando atualizar usuário:', [
+                 'user' => $userData
+            ]);
 
             $response = $this->client->post("/api/auth/user/set/{$userId}", [
-                'json' => $userData
+                'json' => [
+                    'user' => $userData
+                ]
             ]);
 
             $body = $response->getBody()->getContents();
-            Log::error('body: '. $body);
+            Log::debug('Body aqui:' .$body);
             $data = json_decode($body, true);
 
-            if(isset($data['result']) && $data['result'] === 'saved'){
+            Log::info('Resposta da API:', $data);
+
+            if (isset($data['result']) && $data['result'] === 'saved') {
                 return true;
             }
 
             $errorMessage = isset($data['validations'])
                 ? json_encode($data['validations'])
-                : ($data['result'] ?? 'Unknown error');
+                : ($data['message'] ?? $data['result'] ?? 'Unknown error');
 
             Log::error('Erro ao atualizar user: ' . $errorMessage);
             throw new \Exception('Failed to update user: ' . $errorMessage);
-
-
         } catch (\Throwable $e) {
             Log::error('Error updating user in OPNsense: ' . $e->getMessage());
             throw $e;

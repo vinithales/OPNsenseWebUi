@@ -141,10 +141,10 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string', // Na view é 'name', no service é 'username'
+                'name' => 'required|string',
                 'password' => 'nullable|string|confirmed|min:6',
                 'email' => 'nullable|email',
-                'descr' => 'nullable|string', // Na view é 'descr', no service é 'fullname'
+                'descr' => 'nullable|string',
                 'expires' => 'nullable|date',
                 'authorizedkeys' => 'nullable|string',
                 'disabled' => 'nullable|boolean',
@@ -156,35 +156,44 @@ class UserController extends Controller
                 'priv.*' => 'string'
             ]);
 
-
             $userData = [
-                'name' => $validated['name'], // Mapear 'name' para 'username'
-                'password' => $validated['password'] ?? null,
-                'email' => $validated['email'] ?? null,
-                'fullname' => $validated['descr'] ?? null, // Mapear 'descr' para 'fullname'
-                'expires' => $validated['expires'] ?? null,
-                'authorizedkeys' => $validated['authorizedkeys'] ?? null,
-                'disabled' => $validated['disabled'] ?? false,
-                'user.shell' => $validated['shell'] ?? null,
-                'language' => $validated['language'] ?? null,
-                'groups' => $validated['groups'] ?? [],
-                'priv' => $validated['priv'] ?? []
+                'disabled' => $validated['disabled'] ?? '0',
+                'name' => $validated['name'],
+                'password' => $validated['password'] ?? '',
+                'scrambled_password' => '0',
+                'descr' => $validated['descr'] ?? '',
+                'email' => $validated['email'] ?? '',
+                'comment' => 'Usuário atualizado via API',
+                'landing_page' => '',
+                'language' => $validated['language'] ?? '',
+                'shell' => $validated['shell'] ?? '',
+                'expires' => $validated['expires'] ?? '',
+                'user.group_memberships' => isset($validated['groups']) ? implode(',', $validated['groups']) : '',
+                'priv' => isset($validated['priv']) ? implode(',', $validated['priv']) : '',
+                'otp_uri' => '',
+                'otp_seed' => '',
+                'authorizedkeys' => $validated['authorizedkeys'] ?? ''
             ];
 
-            $result = $this->userService->updateUser($uuid, $userData);
 
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'message' => 'User updated successfully']);
+            $userData = array_filter($userData, function ($value) {
+                return $value !== null && $value !== '';
+            });
+
+            if ($this->userService->updateUser($uuid, $userData)) {
+                return redirect()->route('users.index') // Corrigido para users.index
+                    ->with('success', 'Usuário atualizado com sucesso!');
             }
 
-            return redirect()->route('users.index')->with('success', 'User updated successfully');
+            return redirect()->route('users.index')->with('error', 'Erro ao atualizar usuário');
         } catch (\Exception $e) {
+            Log::error('Erro ao atualizar usuário: ' . $e->getMessage());
+
             if (request()->wantsJson()) {
-                Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER IF ERRO:' . $e->getMessage());
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
             }
+
             return back()->with('error', $e->getMessage())->withInput();
-            Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER:' . $e->getMessage());
         }
     }
 

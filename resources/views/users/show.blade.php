@@ -53,7 +53,6 @@
                             <label for="name" class="block text-sm font-medium text-gray-700">Nome de Usuário
                                 (Login)</label>
                             <input type="text" name="name" id="name" value="{{ $user['name'] ?? '' }}" readonly
-                                disabled
                                 class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm sm:text-sm cursor-not-allowed">
                             <p class="mt-2 text-xs text-gray-500">O nome de usuário não pode ser alterado.</p>
                         </div>
