@@ -44,7 +44,7 @@
                 </div>
                 <div>
                     <p class="text-3xl font-semibold text-gray-900 mb-1" id="total-users">0</p>
-                    <p class="text-sm text-gray-500">Carregando...</p>
+                    <p class="text-sm text-gray-500">Usuários criados</p>
                 </div>
             </div>
 
@@ -236,7 +236,8 @@
                         .toUpperCase()
                         .substring(0, 2);
 
-                    let editUrl = "{{ route('users.edit', ['uuid' => '__UUID__']) }}".replace('__UUID__', user.uuid);
+                    let editUrl = "{{ route('users.edit', ['uuid' => '__UUID__']) }}".replace('__UUID__',
+                        user.uuid);
 
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -263,9 +264,31 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="${editUrl}" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a>
-                            <button class="text-red-600 hover:text-red-900" onclick="deleteUser('${user.uuid}')">Excluir</button>
-                        </td>
+    <div class="flex items-center justify-end space-x-4">
+        <a href="${editUrl}" class="text-gray-400 hover:text-indigo-600" title="Editar">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2
+                         0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2
+                         2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+        </a>
+        <button class="text-gray-400 hover:text-red-600" title="Excluir"
+                onclick="deleteUser('${user.uuid}')">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138
+                         21H7.862a2 2 0 01-1.995-1.858L5
+                         7m5 4v6m4-6v6m1-10V4a1 1
+                         0 00-1-1h-4a1 1 0 00-1
+                         1v3M4 7h16"/>
+            </svg>
+        </button>
+    </div>
+</td>
+
                     `;
 
                     tbody.appendChild(row);

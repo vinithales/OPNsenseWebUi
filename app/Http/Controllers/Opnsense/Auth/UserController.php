@@ -25,17 +25,17 @@ class UserController extends Controller
 
 
 
-    public function indexView()
+    public function index()
     {
         return view('users.index');
     }
 
-    public function createView()
+    public function create()
     {
         return view('users.create');
     }
 
-    public function editView(string $uuid)
+    public function edit(string $uuid)
     {
         try {
             $user = $this->userService->getUser($uuid);
@@ -76,7 +76,7 @@ class UserController extends Controller
         }
     }
 
-    public function apiCreate(Request $request)
+    public function store(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -122,7 +122,7 @@ class UserController extends Controller
         }
     }
 
-    public function apiDestroy(string $id)
+    public function destroy(string $id)
     {
         try {
             $result = $this->userService->deleteUser($id);
@@ -181,7 +181,7 @@ class UserController extends Controller
             });
 
             if ($this->userService->updateUser($uuid, $userData)) {
-                return redirect()->route('users.index') // Corrigido para users.index
+                return redirect()->route('users.index')
                     ->with('success', 'Usuário atualizado com sucesso!');
             }
 

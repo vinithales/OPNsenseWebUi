@@ -10,7 +10,7 @@
                 <p class="text-gray-600">Altere as informações do usuário, grupos e permissões.</p>
             </div>
             <div>
-                <a href="{{-- {{ route('users.index') }} --}}"
+                <a href="{{ route('users.index') }} "
                     class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -169,7 +169,7 @@
 
                 {{-- Botões de ação --}}
                 <div class="mt-8 flex justify-end space-x-3 border-t pt-6">
-                    <a href="{{-- {{ route('users.index') }} --}}"
+                    <a href="{{ route('users.index') }} "
                         class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancelar</a>
                     <button type="submit"
                         class="flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700">

@@ -33,20 +33,20 @@ Route::get('/', function () {
 //Route::middleware(['auth'])->group(function () {
 // Users
 //api
-Route::get('api/users', [UserController::class, 'apiIndex'])->name('users.api.index');
-Route::post('/user/create', action: [UserController::class, 'apiCreate'])->name('users.api.create');
-Route::delete('api/users/{user}', [UserController::class, 'apiDestroy'])->name('users.api.destroy');
+
 
 Route::get('/users/import/template', [UserController::class, 'downloadTemplate'])->name('users.import.template');
 Route::post('/users/import/process', [UserController::class, 'processImport'])->name('users.import.process');
 Route::get('/users/import', [UserController::class, 'importView'])->name('users.import');
 
 
-Route::get('/users', [UserController::class, 'indexView'])->name('users.index');
-Route::get('/users/create', [UserController::class, 'createView'])->name('users.create');
-Route::get('/users/{uuid}/edit', [UserController::class, 'editView'])->name('users.edit');
+Route::get('/users', [UserController::class, 'index'])->name('users.index');
+Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+Route::get('/users/{uuid}/edit', [UserController::class, 'edit'])->name('users.edit');
 Route::put('/users/{uuid}', [UserController::class, 'update'])->name('users.update');
-
+Route::get('api/users', [UserController::class, 'apiIndex'])->name('users.api.index');
+Route::post('/user/create', action: [UserController::class, 'store'])->name('users.api.create');
+Route::delete('api/users/{user}', [UserController::class, 'destroy'])->name('users.api.destroy');
 
 
 
