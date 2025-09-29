@@ -7,6 +7,7 @@ use App\Services\Opnsense\PermissionService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class GroupController extends Controller
 {
@@ -105,21 +106,37 @@ class GroupController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string',
                 'description' => 'nullable|string',
-                'privileges' => 'nullable|array',
-                'privileges.*' => 'string'
+                'priv' => 'nullable|array',
+                'priv.*' => 'string',
+                'members' => 'nullable|array',
+                'members.*' => 'string'
             ]);
 
-            // Convert privileges array to comma-separated string
-            if (isset($validated['privileges'])) {
-                $validated['priv'] = implode(',', $validated['privileges']);
-                unset($validated['privileges']);
+            $data = [
+                'group' => [
+                    'name' => $validated['name'],
+                    'description' => $validated['description'] ?? '',
+                    'scope' => 'user'
+                ]
+            ];
+
+            if (isset($validated['priv'])) {
+                // vírgula entre os privilégios
+                $data['group']['priv'] = implode(',', $validated['priv']);
             }
 
-            $result = $this->groupService->updateGroup($id, $validated);
-
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'success', 'message' => 'Group updated successfully']);
+            if (isset($validated['members'])) {
+                // vírgula entre os IDs de membro
+                $data['group']['member'] = implode(',', $validated['members']);
             }
+            Log::debug('Payload enviado: ' . json_encode($data));
+
+
+            if ($this->groupService->updateGroup($id, $data)) {
+                return redirect()->route('groups.index')
+                    ->with('success', 'Grupo criado com sucesso!');
+            }
+
 
             return redirect()->route('groups.index')->with('success', 'Group updated successfully');
         } catch (\Exception $e) {

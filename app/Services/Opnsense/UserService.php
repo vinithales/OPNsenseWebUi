@@ -17,19 +17,16 @@ class UserService extends BaseService
             ]);
 
             $body = $response->getBody()->getContents();
-            Log::debug("Retonro de busca especifica:" .$body);
             $data = json_decode($body, true);
 
 
             if (!is_array($data) || !isset($data['user'])) {
-                Log::warning("Resposta inesperada ao buscar usuário {$userId}: " . $body);
                 return null;
             }
 
             $user = $data['user'];
 
             if (!isset($user['uid']) || !isset($user['name'])) {
-                Log::info("Usuário {$userId} não encontrado ou dados incompletos.");
                 return null;
             }
 
@@ -108,23 +105,30 @@ class UserService extends BaseService
         }
     }
 
-    public function updateUser($userId, array $userData)
+    public function updateUser(string $userId, array $userData)
     {
         try {
 
-            $response = $this->client->post('/api/auth/user/set/{$userId}', [
-                'json' => $userData,
-                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
-                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
-                }
+            $response = $this->client->post("/api/auth/user/set/{$userId}", [
+                'json' => $userData
             ]);
 
-            Log::debug('RETORNO DA ATT:'. $response);
+            $body = $response->getBody()->getContents();
+            Log::error('body: '. $body);
+            $data = json_decode($body, true);
 
-            if ($response['result'] === 'saved') {
+            if(isset($data['result']) && $data['result'] === 'saved'){
                 return true;
             }
-            throw new \Exception('Failed to update user: ' . ($response['validation'] ?? $response['result']));
+
+            $errorMessage = isset($data['validations'])
+                ? json_encode($data['validations'])
+                : ($data['result'] ?? 'Unknown error');
+
+            Log::error('Erro ao atualizar user: ' . $errorMessage);
+            throw new \Exception('Failed to update user: ' . $errorMessage);
+
+
         } catch (\Throwable $e) {
             Log::error('Error updating user in OPNsense: ' . $e->getMessage());
             throw $e;

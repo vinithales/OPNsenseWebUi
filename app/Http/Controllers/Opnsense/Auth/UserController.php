@@ -39,7 +39,7 @@ class UserController extends Controller
     {
         try {
             $user = $this->userService->getUser($uuid);
-            $groups = $this->groupService->getGroups();
+            $group = $this->groupService->getGroups();
 
             if (!$user) {
                 return redirect()->route('users.index')->with('error', 'User not found');
@@ -47,7 +47,8 @@ class UserController extends Controller
 
             $user['uuid'] = $uuid;
 
-            return view('users.show', compact('user', 'groups'));
+
+            return view('users.show', compact('user', 'group'));
         } catch (\Exception $e) {
             Log::debug('ERRO DO EDIT AQUI:' . $e->getMessage());
             return back()->with('error do edit', $e->getMessage());
@@ -106,6 +107,7 @@ class UserController extends Controller
                     'authorizedkeys' => $validated['authorizedkeys'] ?? ''
                 ]
             ];
+            Log::debug('Payload enviado: ' . json_encode($userData));
 
             if ($this->userService->createUser($userData)) {
                 return redirect()->route('users.index')
@@ -154,11 +156,7 @@ class UserController extends Controller
                 'priv.*' => 'string'
             ]);
 
-            Log::debug('CHEGOU NA CONTROLLER');
 
-            Log::debug('UUID da URL: ' . $uuid);
-            Log::debug('Dados do request: ', $request->all());
-            // Mapear os campos da view para o formato do service
             $userData = [
                 'name' => $validated['name'], // Mapear 'name' para 'username'
                 'password' => $validated['password'] ?? null,
@@ -182,11 +180,11 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('success', 'User updated successfully');
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
-                Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER IF ERRO:' .$e->getMessage());
+                Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER IF ERRO:' . $e->getMessage());
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
             }
             return back()->with('error', $e->getMessage())->withInput();
-                Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER:' .$e->getMessage());
+            Log::error('DEU ERRO NO UPDATE E ENTRADA NO CONTROLLER:' . $e->getMessage());
         }
     }
 

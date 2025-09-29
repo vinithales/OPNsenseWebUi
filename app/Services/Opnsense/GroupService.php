@@ -72,16 +72,28 @@ class GroupService extends BaseService
     }
 
 
-    public function updateGroup($groupId, array $groupData)
+    public function updateGroup(string $groupId, array $groupData)
     {
         try {
-            $response = $this->client->post("auth/group/set/{$groupId}", [
+            $response = $this->client->post("/api/auth/group/set/{$groupId}", [
                 'json' => $groupData
             ]);
-            if ($response['result'] === 'saved') {
+
+            $body = $response->getBody()->getContents();
+
+            $data = json_decode($body, true);
+
+            if (isset($data['result']) && $data['result'] === 'saved') {
+                Log::info("Grupo {$groupId} atualizado com sucesso");
                 return true;
             }
-            throw new \Exception('Failed to update group: ' . ($response['validation'] ?? $response['result']));
+
+            $errorMessage = isset($data['validations'])
+                ? json_encode($data['validations'])
+                : ($data['result'] ?? 'Unknown error');
+
+            Log::error('Erro ao atualizar grupo: ' . $errorMessage);
+            throw new \Exception('Failed to update group: ' . $errorMessage);
         } catch (\Throwable $e) {
             Log::error('Error updating group in OPNsense: ' . $e->getMessage());
             throw $e;
@@ -93,9 +105,9 @@ class GroupService extends BaseService
         try {
             $response = $this->client->post("/api/auth/group/del/{$groupId}", [
                 'json' => [],
-                ]);
-           $body = (string) $response->getBody();
-           $data = json_decode($body, true);
+            ]);
+            $body = (string) $response->getBody();
+            $data = json_decode($body, true);
 
             if ($data['result'] === 'deleted') {
                 return true;
@@ -120,7 +132,7 @@ class GroupService extends BaseService
             $body = $response->getBody()->getContents();
             $data = json_decode($body, true);
 
-             if (!is_array($data) || !isset($data['group'])) {
+            if (!is_array($data) || !isset($data['group'])) {
                 Log::warning("Resposta inesperada ao buscar grupo {$groupId}: " . $body);
                 return null;
             }
@@ -133,12 +145,10 @@ class GroupService extends BaseService
             }
 
             return $group;
-
         } catch (\Exception $e) {
             Log::error("Error fetching grouo {$groupId}: " . $e->getMessage());
             throw $e;
         }
-
     }
 
 

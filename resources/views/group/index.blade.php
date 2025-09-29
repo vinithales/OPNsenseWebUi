@@ -1,6 +1,20 @@
 @extends('layouts.header')
 
 @section('main')
+    {{-- Adicione isso no topo da sua view index --}}
+    @if (session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Sucesso!</strong>
+            <span class="block sm:inline">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Erro!</strong>
+            <span class="block sm:inline">{{ session('error') }}</span>
+        </div>
+    @endif
     <div class="p-8 bg-gray-100 min-h-screen">
         {{-- Cabeçalho da Página --}}
         <div class="flex items-center justify-between mb-6">
@@ -88,9 +102,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="groups-table-body">
-                        {{-- Exemplo de Linha 1: Administradores --}}
-
-                        {{-- Mais linhas podem ser adicionadas dinamicamente aqui --}}
+                        
                     </tbody>
                 </table>
             </div>
