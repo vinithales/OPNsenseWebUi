@@ -56,7 +56,7 @@ Route::get('/groups/create', [GroupController::class, 'createView'])->name('grou
 Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
 Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
 Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
-Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+Route::delete('api/groups/{group}', [GroupController::class, 'destroy'])->name('groups.api.destroy');
 Route::get('api/groups', [GroupController::class, 'index'])->name('groups.api.index');
 
 

@@ -90,8 +90,10 @@ class GroupController extends Controller
             if (!$group) {
                 return redirect()->route('groups.index')->with('error', 'Group not found');
             }
-            $privileges = $this->permissionService->getAvailablePrivileges();
-            return view('groups.edit', compact('group', 'privileges'));
+
+            $group['uuid'] = $id;
+
+            return view('group.show', compact('group'));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -133,16 +135,13 @@ class GroupController extends Controller
         try {
             $result = $this->groupService->deleteGroup($id);
 
-            if (request()->wantsJson()) {
+            if ($result === true || $result === 'true') {
                 return response()->json(['status' => 'success', 'message' => 'Group deleted successfully']);
             }
 
-            return redirect()->route('groups.index')->with('success', 'Group deleted successfully');
+            return response()->json(['status' => 'error', 'message' => 'Falha na exclusão do usuário'], 400);
         } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
-            return back()->with('error', $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 }

@@ -19,7 +19,7 @@ class GroupService extends BaseService
 
             $statusCode = $response->getStatusCode();
             $body = (string) $response->getBody();
-            Log::debug('Response Body: ' . $body);
+            //Log::debug('Response Body: ' . $body);
             if ($statusCode !== 200) {
                 throw new \Exception("Failed to fetch groups: HTTP $statusCode");
             }
@@ -91,9 +91,13 @@ class GroupService extends BaseService
     public function deleteGroup($groupId)
     {
         try {
-            $response = $this->client->post("auth/group/del/{$groupId}");
+            $response = $this->client->post("/api/auth/group/del/{$groupId}", [
+                'json' => [],
+                ]);
+           $body = (string) $response->getBody();
+           $data = json_decode($body, true);
 
-            if ($response['result'] === 'deleted') {
+            if ($data['result'] === 'deleted') {
                 return true;
             }
             throw new \Exception('Failed to delete group: ' . ($response['message'] ?? 'Unknown error'));
@@ -109,23 +113,32 @@ class GroupService extends BaseService
     public function getGroup($groupId)
     {
         try {
-            // Tenta buscar o grupo diretamente pela API
-            $response = $this->client->get("/api/auth/group/get/{$groupId}");
-            if (isset($response['group'])) {
-                return $response['group'];
+            $response = $this->client->post("/api/auth/group/get/{$groupId}", [
+                'json' => [],
+            ]);
+
+            $body = $response->getBody()->getContents();
+            $data = json_decode($body, true);
+
+             if (!is_array($data) || !isset($data['group'])) {
+                Log::warning("Resposta inesperada ao buscar grupo {$groupId}: " . $body);
+                return null;
             }
-            // Fallback: busca todos os grupos e filtra
-            $allGroups = $this->getGroups();
-            foreach ($allGroups as $group) {
-                if (isset($group['uuid']) && $group['uuid'] === $groupId) {
-                    return $group;
-                }
+
+            $group = $data['group'];
+
+            if (!isset($group['gid']) || !isset($group['name'])) {
+                Log::info("Grupo {$groupId} não encontrado ou dados incompletos.");
+                return null;
             }
-            return null;
+
+            return $group;
+
         } catch (\Exception $e) {
-            Log::error("Erro ao buscar grupo {$groupId}: " . $e->getMessage());
-            return null;
+            Log::error("Error fetching grouo {$groupId}: " . $e->getMessage());
+            throw $e;
         }
+
     }
 
 
