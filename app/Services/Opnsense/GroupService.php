@@ -179,4 +179,70 @@ class GroupService extends BaseService
             return null;
         }
     }
+
+    /**
+     * Busca grupo com variações de nome (aluno, alunos, Aluno, Alunos, etc)
+     *
+     * @param string $baseGroupName Nome base (ex: 'aluno' ou 'professor')
+     * @return array|null
+     */
+    public function findGroupWithVariations(string $baseGroupName): ?array
+    {
+        try {
+            $response = $this->client->post('/api/auth/group/search', [
+                'json' => [],
+            ]);
+
+            $body = (string) $response->getBody();
+            $data = json_decode($body, true);
+
+            if (!isset($data['rows'])) {
+                return null;
+            }
+
+            // Normaliza o nome base para comparação
+            $normalizedBase = strtolower(trim($baseGroupName));
+
+            // Variações possíveis
+            $variations = [
+                $normalizedBase,                    // aluno
+                $normalizedBase . 's',              // alunos
+                ucfirst($normalizedBase),           // Aluno
+                ucfirst($normalizedBase) . 's',     // Alunos
+                strtoupper($normalizedBase),        // ALUNO
+                strtoupper($normalizedBase) . 'S',  // ALUNOS
+            ];
+
+            foreach ($data['rows'] as $group) {
+                if (!isset($group['name'])) {
+                    continue;
+                }
+
+                $groupName = trim($group['name']);
+
+                // Compara com todas as variações
+                foreach ($variations as $variation) {
+                    if (strcasecmp($groupName, $variation) === 0) {
+                        Log::info("Grupo encontrado com variação", [
+                            'buscado' => $baseGroupName,
+                            'encontrado' => $groupName,
+                            'gid' => $group['gid'] ?? $group['uuid'] ?? null
+                        ]);
+                        return $group;
+                    }
+                }
+            }
+
+            Log::warning("Nenhum grupo encontrado para: {$baseGroupName}", [
+                'variacoes_buscadas' => $variations
+            ]);
+
+            return null;
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao buscar grupo com variações: ' . $e->getMessage());
+            return null;
+        }
+    }
 }
+

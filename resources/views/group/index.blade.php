@@ -35,22 +35,14 @@
             </div>
             <div class="flex items-center space-x-3">
                 <button
-                    class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    <svg class="w-5 h-5 mr-2 -ml-1 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    Importar em CSV
-                </button>
-                <button
+                    onclick="openExportModal()"
                     class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
                     <svg class="w-5 h-5 mr-2 -ml-1 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    Exportar em CSV
+                    Exportar Usuários
                 </button>
                 <a href="{{ route('groups.create') }}">
                     <button
@@ -108,7 +100,43 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal de Exportação --}}
+    <div id="exportModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Exportar Usuários do Grupo</h3>
+                    <button onclick="closeExportModal()" class="text-gray-400 hover:text-gray-500">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="mt-2">
+                    <p class="text-sm text-gray-500 mb-4">Selecione o grupo para exportar os usuários:</p>
+                    <select id="groupSelect" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option value="">Selecione um grupo...</option>
+                    </select>
+                </div>
+                <div class="mt-5 flex justify-end space-x-3">
+                    <button onclick="closeExportModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        Cancelar
+                    </button>
+                    <button onclick="exportGroupUsers()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        <svg class="w-5 h-5 inline-block mr-1 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Exportar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let allGroups = []; // Armazena todos os grupos carregados
+
         document.addEventListener('DOMContentLoaded', function() {
             // Função para buscar grupos da API
             async function fetchGroups() {
@@ -135,6 +163,7 @@
 
             // Função para renderizar grupos na tabela
             function renderGroups(groups) {
+                allGroups = groups; // Armazena os grupos globalmente
                 const tbody = document.getElementById('groups-table-body');
                 tbody.innerHTML = '';
 
@@ -207,6 +236,51 @@
             fetchGroups();
 
             setInterval(fetchGroups, 10000);
+        });
+
+        // Funções para o modal de exportação
+        function openExportModal() {
+            // Popula o select com os grupos
+            const select = document.getElementById('groupSelect');
+            select.innerHTML = '<option value="">Selecione um grupo...</option>';
+
+            allGroups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.uuid;
+                option.textContent = `${group.name} (${group.members_count || 0} membros)`;
+                select.appendChild(option);
+            });
+
+            document.getElementById('exportModal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+            document.getElementById('groupSelect').value = '';
+        }
+
+        function exportGroupUsers() {
+            const groupId = document.getElementById('groupSelect').value;
+
+            if (!groupId) {
+                alert('Por favor, selecione um grupo');
+                return;
+            }
+
+            // Redireciona para a rota de exportação
+            window.location.href = `/groups/${groupId}/export-users`;
+
+            // Fecha o modal após um pequeno delay
+            setTimeout(() => {
+                closeExportModal();
+            }, 500);
+        }
+
+        // Fecha o modal ao clicar fora dele
+        document.getElementById('exportModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeExportModal();
+            }
         });
 
         // Função para excluir grupo

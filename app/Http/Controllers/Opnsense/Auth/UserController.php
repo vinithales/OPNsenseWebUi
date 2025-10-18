@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Opnsense\Auth;
 
 use App\Services\Opnsense\UserService;
 use App\Services\Opnsense\GroupService;
+use App\Services\UserImportService;
+use App\Services\UserCredentialsPdfService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -11,16 +13,25 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class UserController extends Controller
 {
     protected $userService;
     protected $groupService;
+    protected $importService;
+    protected $pdfService;
 
-    public function __construct(UserService $userService, GroupService $groupService)
-    {
+    public function __construct(
+        UserService $userService,
+        GroupService $groupService,
+        UserImportService $importService,
+        UserCredentialsPdfService $pdfService
+    ) {
         $this->userService = $userService;
         $this->groupService = $groupService;
+        $this->importService = $importService;
+        $this->pdfService = $pdfService;
     }
 
 
@@ -64,6 +75,10 @@ class UserController extends Controller
     {
         try {
             $users = $this->userService->getUsers();
+
+            // Enriquece usuários com metadados (RA e tipo) extraídos do comment
+            $users = $this->userService->enrichUsersWithMetadata($users);
+
             return response()->json([
                 'status' => 'success',
                 'data' => $users
@@ -86,13 +101,45 @@ class UserController extends Controller
                 'password' => 'required|confirmed|min:8',
                 'group' => 'required|array',
                 'group.*' => 'string',
+                'ra' => 'nullable|string|max:50',
+                'user_type' => 'required|in:aluno,professor,admin',
                 'comment' => 'nullable|string',
                 'expires' => 'nullable|date',
                 'user_shell' => 'nullable|string',
                 'authorizedkeys' => 'nullable|string'
             ]);
 
+            // Verifica se RA já existe (se fornecido)
+            if (!empty($validated['ra'])) {
+                $existingUser = $this->userService->findUserByName($validated['ra']);
+                if ($existingUser) {
+                    return back()
+                        ->withErrors(['ra' => "RA {$validated['ra']} já está cadastrado no sistema."])
+                        ->withInput();
+                }
+            }
+
+            // Verifica se o nome de usuário já existe
+            $existingUser = $this->userService->findUserByName($validated['name']);
+            if ($existingUser) {
+                return back()
+                    ->withErrors(['name' => "Nome de usuário '{$validated['name']}' já existe."])
+                    ->withInput();
+            }
+
             $groupMemberships = implode(',', $validated['group']);
+
+            // Prepara comment com RA e tipo de usuário
+            $commentParts = [];
+            if (!empty($validated['ra'])) {
+                $commentParts[] = "RA: {$validated['ra']}";
+            }
+            $commentParts[] = "Tipo: {$validated['user_type']}";
+            if (!empty($validated['comment'])) {
+                $commentParts[] = $validated['comment'];
+            }
+            $commentParts[] = "Criado: " . now()->format('Y-m-d H:i:s');
+            $comment = implode(' | ', $commentParts);
 
             $userData = [
                 'user' => [
@@ -101,14 +148,16 @@ class UserController extends Controller
                     'email' => $validated['email'],
                     'password' => $validated['password'],
                     'group_memberships' => $groupMemberships,
-                    'comment' => $validated['comment'] ?? '',
+                    'comment' => $comment,
                     'expires' => $validated['expires'] ?? '',
                     'user.shell' => $validated['user_shell'] ?? '/sbin/nologin',
                     'authorizedkeys' => $validated['authorizedkeys'] ?? ''
                 ]
             ];
+
             Log::debug('Payload enviado: ' . json_encode($userData));
 
+            // Cria usuário no OPNsense
             if ($this->userService->createUser($userData)) {
                 return redirect()->route('users.index')
                     ->with('success', 'Usuário criado com sucesso!');
@@ -199,7 +248,109 @@ class UserController extends Controller
 
 
     /**
-     * Gera e faz download do template CSV
+     * Download do template Excel para importação
+     */
+    public function downloadExcelTemplate()
+    {
+        try {
+            $spreadsheet = $this->importService->createTemplate();
+            $writer = new Xlsx($spreadsheet);
+
+            $filename = 'template_importacao_usuarios_' . now()->format('Y-m-d') . '.xlsx';
+            $temp_file = tempnam(sys_get_temp_dir(), $filename);
+
+            $writer->save($temp_file);
+
+            return response()->download($temp_file, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao gerar template Excel: ' . $e->getMessage());
+            return back()->with('error', 'Erro ao gerar template: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Processar importação via Excel
+     */
+    public function processExcelImport(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'excel_file' => 'required|file|mimes:xlsx,xls|max:5120', // 5MB
+                'user_type' => 'required|in:aluno,professor',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            $file = $request->file('excel_file');
+            $userType = $request->input('user_type');
+
+            // Processa importação
+            $result = $this->importService->importFromExcel($file->getRealPath(), $userType);
+
+            if ($result['success']) {
+                // Armazena credenciais na sessão para geração de PDF
+                session(['import_credentials' => $result['credentials']]);
+
+                $message = "{$result['total_imported']} usuários importados com sucesso!";
+
+                if ($result['total_errors'] > 0) {
+                    $message .= " {$result['total_errors']} erros encontrados.";
+                }
+
+                return redirect()->back()
+                    ->with('success', $message)
+                    ->with('import_errors', $result['errors'])
+                    ->with('show_pdf_button', true);
+            } else {
+                return redirect()->back()
+                    ->with('error', 'Nenhum usuário foi importado.')
+                    ->with('import_errors', $result['errors']);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao processar importação Excel: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao processar arquivo: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Gerar e baixar PDF com credenciais dos usuários importados
+     */
+    public function downloadCredentialsPdf()
+    {
+        try {
+            $credentials = session('import_credentials', []);
+
+            if (empty($credentials)) {
+                return redirect()->back()
+                    ->with('error', 'Nenhuma credencial disponível para gerar PDF.');
+            }
+
+            // Gera PDF
+            $pdf = $this->pdfService->downloadCredentialsPdf($credentials);
+
+            // Limpa credenciais da sessão (LGPD: não manter senhas em sessão)
+            session()->forget('import_credentials');
+
+            return $pdf;
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao gerar PDF de credenciais: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao gerar PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Gera e faz download do template CSV (método legado mantido)
      */
     public function downloadTemplate()
     {

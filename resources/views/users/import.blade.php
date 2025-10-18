@@ -21,6 +21,93 @@
         </div>
 
         <div class="space-y-8">
+            {{-- Seção de Importação via Excel (Nova Funcionalidade) --}}
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-12 w-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4 flex-grow">
+                        <h2 class="text-2xl font-bold text-gray-900">📊 Importação via Excel (Novo!)</h2>
+                        <p class="text-gray-700 mt-2">Importe alunos e professores facilmente através de arquivo Excel (.xlsx)</p>
+
+                        <div class="mt-4 bg-white rounded-lg p-4 border border-indigo-200">
+                            <h3 class="font-semibold text-gray-900 mb-2">✅ Como funciona:</h3>
+                            <ul class="list-disc list-inside text-gray-700 space-y-1">
+                                <li>Baixe o template Excel com as colunas: <strong>RA</strong> e <strong>E-mail</strong></li>
+                                <li>Preencha os dados dos usuários (um por linha)</li>
+                                <li>Senhas seguras são geradas automaticamente</li>
+                                <li>Após importar, baixe o PDF com as credenciais para entrega aos usuários</li>
+                            </ul>
+                        </div>
+
+                        <form action="{{ route('users.import.excel.process') }}" method="POST" enctype="multipart/form-data" class="mt-6">
+                            @csrf
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Usuário</label>
+                                    <select name="user_type" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="aluno">Aluno</option>
+                                        <option value="professor">Professor</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Excel</label>
+                                    <input type="file" name="excel_file" accept=".xlsx,.xls" required class="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 p-2">
+                                </div>
+                            </div>
+
+                            <div class="flex gap-3">
+                                <a href="{{ route('users.import.excel.template') }}" class="inline-flex items-center px-4 py-2 bg-white border border-indigo-300 rounded-md shadow-sm text-sm font-medium text-indigo-700 hover:bg-indigo-50">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    Baixar Template Excel
+                                </a>
+
+                                <button type="submit" class="inline-flex items-center px-6 py-2 bg-indigo-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    Processar Importação
+                                </button>
+                            </div>
+                        </form>
+
+                        @if(session('show_pdf_button'))
+                        <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                            <p class="text-green-800 mb-3">✅ Importação concluída! Baixe o PDF com as credenciais:</p>
+                            <a href="{{ route('users.import.credentials.pdf') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                Baixar PDF com Credenciais
+                            </a>
+                        </div>
+                        @endif
+
+                        @if(session('import_errors') && count(session('import_errors')) > 0)
+                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <h4 class="font-semibold text-yellow-800 mb-2">⚠️ Erros encontrados:</h4>
+                            <ul class="list-disc list-inside text-yellow-700 text-sm space-y-1">
+                                @foreach(session('import_errors') as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t-2 border-gray-200 pt-8">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">📄 Importação via CSV (Método Legado)</h2>
+            </div>
+
             <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">

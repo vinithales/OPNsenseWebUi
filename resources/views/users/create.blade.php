@@ -50,12 +50,35 @@
                                 especiais.</p>
                         </div>
 
+                        {{-- RA (Registro Acadêmico) - NOVO CAMPO --}}
+                        <div>
+                            <label for="ra" class="block text-sm font-medium text-gray-700">
+                                RA (Registro Acadêmico)
+                                <span class="text-gray-500 font-normal">(Opcional)</span>
+                            </label>
+                            <input type="text" name="ra" id="ra" placeholder="Ex: 123456"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <p class="mt-2 text-xs text-gray-500">Identificação única do aluno/professor</p>
+                        </div>
+
                         {{-- Email --}}
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                             <input type="email" name="email" id="email" placeholder="Ex: joao.silva@empresa.com"
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 required>
+                        </div>
+
+                        {{-- Tipo de Usuário - NOVO CAMPO --}}
+                        <div>
+                            <label for="user_type" class="block text-sm font-medium text-gray-700">Tipo de Usuário</label>
+                            <select name="user_type" id="user_type"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="aluno">Aluno</option>
+                                <option value="professor">Professor</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                            <p class="mt-2 text-xs text-gray-500">Categoria do usuário no sistema</p>
                         </div>
 
                         {{-- Nível de Acesso --}}

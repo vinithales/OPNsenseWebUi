@@ -196,4 +196,52 @@ class UserService extends BaseService
             throw $e;
         }
     }
+
+    /**
+     * Extrai informações do campo comment
+     * Formato esperado: "RA: 123456 | Tipo: aluno | ..."
+     *
+     * @param string $comment
+     * @return array ['ra' => '123456', 'user_type' => 'aluno']
+     */
+    public function parseComment($comment)
+    {
+        $data = [
+            'ra' => null,
+            'user_type' => null,
+        ];
+
+        if (empty($comment)) {
+            return $data;
+        }
+
+        // Extrai RA
+        if (preg_match('/RA:\s*([^\|]+)/', $comment, $matches)) {
+            $data['ra'] = trim($matches[1]);
+        }
+
+        // Extrai Tipo
+        if (preg_match('/Tipo:\s*([^\|]+)/', $comment, $matches)) {
+            $data['user_type'] = trim($matches[1]);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Enriquece a lista de usuários com dados do comment
+     *
+     * @param array $users
+     * @return array
+     */
+    public function enrichUsersWithMetadata(array $users)
+    {
+        foreach ($users as &$user) {
+            $metadata = $this->parseComment($user['descr'] ?? $user['comment'] ?? '');
+            $user['ra'] = $metadata['ra'];
+            $user['user_type'] = $metadata['user_type'];
+        }
+
+        return $users;
+    }
 }

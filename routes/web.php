@@ -34,7 +34,12 @@ Route::get('/', function () {
 // Users
 //api
 
+// Importação via Excel (novo)
+Route::get('/users/import/excel/template', [UserController::class, 'downloadExcelTemplate'])->name('users.import.excel.template');
+Route::post('/users/import/excel/process', [UserController::class, 'processExcelImport'])->name('users.import.excel.process');
+Route::get('/users/import/excel/credentials-pdf', [UserController::class, 'downloadCredentialsPdf'])->name('users.import.credentials.pdf');
 
+// Importação via CSV (legado)
 Route::get('/users/import/template', [UserController::class, 'downloadTemplate'])->name('users.import.template');
 Route::post('/users/import/process', [UserController::class, 'processImport'])->name('users.import.process');
 Route::get('/users/import', [UserController::class, 'importView'])->name('users.import');
@@ -58,6 +63,7 @@ Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('grou
 Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
 Route::delete('api/groups/{group}', [GroupController::class, 'destroy'])->name('groups.api.destroy');
 Route::get('api/groups', [GroupController::class, 'index'])->name('groups.api.index');
+Route::get('/groups/{group}/export-users', [GroupController::class, 'exportUsers'])->name('groups.export.users');
 
 
 

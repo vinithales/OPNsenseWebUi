@@ -12,6 +12,16 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    // Constantes para tipos de usuário
+    const TYPE_ALUNO = 'aluno';
+    const TYPE_PROFESSOR = 'professor';
+    const TYPE_ADMIN = 'admin';
+
+    // Constantes para status
+    const STATUS_ATIVO = 'ativo';
+    const STATUS_INATIVO = 'inativo';
+    const STATUS_BLOQUEADO = 'bloqueado';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -21,6 +31,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'ra',
+        'user_type',
+        'status',
     ];
 
     /**

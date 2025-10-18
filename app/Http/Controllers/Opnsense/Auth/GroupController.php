@@ -3,21 +3,29 @@
 namespace App\Http\Controllers\Opnsense\Auth;
 
 use App\Services\Opnsense\GroupService;
+use App\Services\Opnsense\UserService;
 use App\Services\Opnsense\PermissionService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\GroupUsersExport;
 
 class GroupController extends Controller
 {
     protected $groupService;
     protected $permissionService;
+    protected $userService;
 
-    public function __construct(GroupService $groupService, PermissionService $permissionService)
-    {
+    public function __construct(
+        GroupService $groupService,
+        PermissionService $permissionService,
+        UserService $userService
+    ) {
         $this->groupService = $groupService;
         $this->permissionService = $permissionService;
+        $this->userService = $userService;
     }
 
     public function index()
@@ -157,6 +165,110 @@ class GroupController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Falha na exclusão do usuário'], 400);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Exporta usuários de um grupo específico para Excel
+     */
+    public function exportUsers(string $groupId)
+    {
+        try {
+            // Busca o grupo
+            $group = $this->groupService->getGroup($groupId);
+
+            if (!$group) {
+                return back()->with('error', 'Grupo não encontrado');
+            }
+
+            Log::debug('Grupo encontrado:', ['group' => $group, 'groupId' => $groupId]);
+
+            // Busca todos os usuários
+            $allUsers = $this->userService->getUsers();
+
+            Log::debug('Total de usuários encontrados: ' . count($allUsers));
+
+            // Log dos primeiros 2 usuários para ver a estrutura
+            if (count($allUsers) > 0) {
+                Log::debug('Exemplo de usuário 1:', ['user' => $allUsers[0]]);
+                if (count($allUsers) > 1) {
+                    Log::debug('Exemplo de usuário 2:', ['user' => $allUsers[1]]);
+                }
+            }
+
+            // Filtra usuários que pertencem ao grupo
+            $groupUsers = array_filter($allUsers, function($user) use ($groupId, $group) {
+                // Log para debug
+                Log::debug('Verificando usuário:', [
+                    'username' => $user['name'] ?? 'N/A',
+                    'group_memberships' => $user['group_memberships'] ?? 'não definido',
+                    'buscando_grupo' => $group['name'] ?? 'N/A',
+                    'groupId' => $groupId
+                ]);
+
+                // Verifica group_memberships (campo correto do OPNsense)
+                if (isset($user['group_memberships']) && !empty($user['group_memberships'])) {
+                    $memberships = is_string($user['group_memberships'])
+                        ? array_map('trim', explode(',', $user['group_memberships']))
+                        : $user['group_memberships'];
+
+                    // Verifica por UUID do grupo
+                    if (in_array($groupId, $memberships)) {
+                        Log::debug('✓ Usuário ' . ($user['name'] ?? 'N/A') . ' encontrado por UUID');
+                        return true;
+                    }
+
+                    // Verifica por GID do grupo
+                    if (isset($group['gid']) && in_array($group['gid'], $memberships)) {
+                        Log::debug('✓ Usuário ' . ($user['name'] ?? 'N/A') . ' encontrado por GID');
+                        return true;
+                    }
+
+                    // Verifica por nome do grupo (case-insensitive)
+                    foreach ($memberships as $membership) {
+                        if (strcasecmp($membership, $group['name']) === 0) {
+                            Log::debug('✓ Usuário ' . ($user['name'] ?? 'N/A') . ' encontrado por nome do grupo');
+                            return true;
+                        }
+                    }
+                }
+
+                Log::debug('✗ Usuário ' . ($user['name'] ?? 'N/A') . ' NÃO pertence ao grupo');
+                return false;
+            });
+
+            Log::debug('Usuários filtrados do grupo: ' . count($groupUsers));
+
+            // Enriquece com metadados do campo comment
+            $groupUsers = $this->userService->enrichUsersWithMetadata($groupUsers);
+
+            // Se não encontrou usuários, retorna mensagem específica
+            if (empty($groupUsers)) {
+                Log::warning('Nenhum usuário encontrado no grupo: ' . $group['name']);
+                return back()->with('error', 'Nenhum usuário encontrado no grupo "' . $group['name'] . '"');
+            }
+
+            // Prepara dados para exportação
+            $exportData = array_map(function($user) use ($group) {
+                return [
+                    'RA' => $user['ra'] ?? 'N/A',
+                    'Nome de Usuário' => $user['name'] ?? '',
+                    'Nome Completo' => $user['fullname'] ?? '',
+                    'Email' => $user['email'] ?? '',
+                    'Tipo' => $user['user_type'] ?? 'N/A',
+                    'Grupo' => $group['name'],
+                    'Status' => !empty($user['disabled']) ? 'Inativo' : 'Ativo',
+                ];
+            }, $groupUsers);
+
+            // Nome do arquivo com o nome do grupo e data
+            $filename = 'usuarios_grupo_' . str_replace(' ', '_', strtolower($group['name'])) . '_' . date('Y-m-d_His') . '.xlsx';
+
+            return Excel::download(new GroupUsersExport($exportData, $group['name']), $filename);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao exportar usuários do grupo: ' . $e->getMessage());
+            return back()->with('error', 'Erro ao exportar usuários: ' . $e->getMessage());
         }
     }
 }
