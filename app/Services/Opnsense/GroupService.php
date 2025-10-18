@@ -7,7 +7,16 @@ use Illuminate\Support\Facades\Log;
 
 class GroupService extends BaseService
 {
-    public function getGroups()
+    protected $userService;
+
+    public function __construct()
+    {
+        parent::__construct();
+        // Injeta UserService para contar membros
+        $this->userService = app(UserService::class);
+    }
+
+    public function getGroups($withMembersCount = true)
     {
         try {
             $response = $this->client->post('/api/auth/group/search', [
@@ -29,10 +38,65 @@ class GroupService extends BaseService
                 throw new \Exception('Invalid response structure');
             }
 
-            return $data['rows'];
+            $groups = $data['rows'];
+
+            // Adiciona contagem de membros se solicitado
+            if ($withMembersCount) {
+                $groups = $this->addMembersCount($groups);
+            }
+
+            return $groups;
         } catch (\Exception $e) {
             Log::error('Error fetching groups from OPNsense: ' . $e->getMessage());
             throw $e;
+        }
+    }
+
+    /**
+     * Adiciona a contagem de membros para cada grupo
+     */
+    protected function addMembersCount(array $groups)
+    {
+        try {
+            // Busca todos os usuários uma única vez
+            $allUsers = $this->userService->getUsers();
+
+            // Para cada grupo, conta quantos usuários pertencem a ele
+            foreach ($groups as &$group) {
+                $count = 0;
+                $groupName = $group['name'] ?? '';
+                $groupGid = $group['gid'] ?? '';
+                $groupUuid = $group['uuid'] ?? '';
+
+                foreach ($allUsers as $user) {
+                    if (isset($user['group_memberships']) && !empty($user['group_memberships'])) {
+                        $memberships = is_string($user['group_memberships'])
+                            ? array_map('trim', explode(',', $user['group_memberships']))
+                            : $user['group_memberships'];
+
+                        // Verifica se o usuário pertence ao grupo (por UUID, GID ou nome)
+                        foreach ($memberships as $membership) {
+                            if ($membership === $groupUuid ||
+                                $membership === $groupGid ||
+                                strcasecmp($membership, $groupName) === 0) {
+                                $count++;
+                                break; // Usuário já contado, próximo usuário
+                            }
+                        }
+                    }
+                }
+
+                $group['members_count'] = $count;
+            }
+
+            return $groups;
+        } catch (\Exception $e) {
+            Log::warning('Erro ao contar membros dos grupos: ' . $e->getMessage());
+            // Retorna os grupos sem a contagem em caso de erro
+            foreach ($groups as &$group) {
+                $group['members_count'] = 0;
+            }
+            return $groups;
         }
     }
 
