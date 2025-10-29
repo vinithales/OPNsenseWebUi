@@ -109,22 +109,22 @@ class UserService extends BaseService
     {
         try {
             Log::info('Tentando atualizar usuário:', [
-                 'user' => $userData
+                'userId' => $userId,
+                'user' => $userData
             ]);
 
             $response = $this->client->post("/api/auth/user/set/{$userId}", [
-                'json' => [
-                    'user' => $userData
-                ]
+                'json' => $userData // userData já vem com a estrutura 'user' do controller
             ]);
 
             $body = $response->getBody()->getContents();
-            Log::debug('Body aqui:' .$body);
+            Log::debug('Resposta completa da API: Status=' . $response->getStatusCode() . ' Body=' . $body);
             $data = json_decode($body, true);
 
-            Log::info('Resposta da API:', $data);
+            Log::info('Resposta da API decodificada:', $data);
 
             if (isset($data['result']) && $data['result'] === 'saved') {
+                Log::info('Usuário atualizado com sucesso');
                 return true;
             }
 
@@ -132,7 +132,10 @@ class UserService extends BaseService
                 ? json_encode($data['validations'])
                 : ($data['message'] ?? $data['result'] ?? 'Unknown error');
 
-            Log::error('Erro ao atualizar user: ' . $errorMessage);
+            Log::error('Erro ao atualizar user: ' . $errorMessage, [
+                'fullResponse' => $data,
+                'validations' => $data['validations'] ?? null
+            ]);
             throw new \Exception('Failed to update user: ' . $errorMessage);
         } catch (\Throwable $e) {
             Log::error('Error updating user in OPNsense: ' . $e->getMessage());

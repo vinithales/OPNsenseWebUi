@@ -28,7 +28,8 @@ class GroupService extends BaseService
 
             $statusCode = $response->getStatusCode();
             $body = (string) $response->getBody();
-            //Log::debug('Response Body: ' . $body);
+            Log::debug('GroupService Response Body: ' . $body);
+
             if ($statusCode !== 200) {
                 throw new \Exception("Failed to fetch groups: HTTP $statusCode");
             }
@@ -39,6 +40,13 @@ class GroupService extends BaseService
             }
 
             $groups = $data['rows'];
+
+            // Log para debug da estrutura dos grupos
+            Log::info('Estrutura dos grupos retornados:', [
+                'total' => count($groups),
+                'first_group' => $groups[0] ?? null,
+                'all_groups_keys' => array_keys($groups[0] ?? [])
+            ]);
 
             // Adiciona contagem de membros se solicitado
             if ($withMembersCount) {

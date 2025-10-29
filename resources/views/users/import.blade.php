@@ -1,19 +1,26 @@
 @extends('layouts.header')
 
 @section('main')
-    <div class="p-8 bg-gray-100 min-h-screen rounded-lg">
+    <div class="p-8 bg-gray-100 min-h-screen">
         {{-- Cabeçalho da Página --}}
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Importar Usuários em Massa</h1>
-                <p class="text-gray-600">Adicione, atualize ou remova múltiplos usuários de uma vez.</p>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-600">
+                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h1 class="text-3xl font-bold text-gray-900">Importar Usuários em Massa</h1>
+                    <p class="text-gray-600">Adicione, atualize ou remova múltiplos usuários de uma vez</p>
+                </div>
             </div>
             <div>
-                <a href="{{ route('users.index') }}"
-                    class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('users.index') }}" class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     Voltar para a Lista
                 </a>
@@ -30,11 +37,11 @@
                         </svg>
                     </div>
                     <div class="ml-4 flex-grow">
-                        <h2 class="text-2xl font-bold text-gray-900">📊 Importação via Excel (Novo!)</h2>
+                        <h2 class="text-2xl font-bold text-gray-900"> Importação via Excel</h2>
                         <p class="text-gray-700 mt-2">Importe alunos e professores facilmente através de arquivo Excel (.xlsx)</p>
 
                         <div class="mt-4 bg-white rounded-lg p-4 border border-indigo-200">
-                            <h3 class="font-semibold text-gray-900 mb-2">✅ Como funciona:</h3>
+                            <h3 class="font-semibold text-gray-900 mb-2">Como funciona:</h3>
                             <ul class="list-disc list-inside text-gray-700 space-y-1">
                                 <li>Baixe o template Excel com as colunas: <strong>RA</strong> e <strong>E-mail</strong></li>
                                 <li>Preencha os dados dos usuários (um por linha)</li>

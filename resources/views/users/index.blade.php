@@ -2,31 +2,37 @@
 
 @section('main')
     <div class="p-8 bg-gray-100 min-h-screen">
+        {{-- Cabeçalho da Página --}}
         <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Gerenciamento de Usuários</h1>
-                <p class="text-gray-600">Controle de acesso e permissões do sistema</p>
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-600">
+                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h1 class="text-3xl font-bold text-gray-900">Gerenciamento de Usuários</h1>
+                    <p class="text-gray-600">Controle de acesso e permissões do sistema</p>
+                </div>
             </div>
-            <div class="flex space-x-3">
+            <div class="flex items-center space-x-3">
                 <a href="{{ route('users.import') }}">
-                    <button
-                        class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <svg class="w-5 h-5 mr-2 -ml-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    <button class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <svg class="w-5 h-5 mr-2 -ml-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                         </svg>
                         Importar Usuários
                     </button>
                 </a>
-                <a href="{{ route('users.create') }}"
-                    class="flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Adicionar Usuário
+                <a href="{{ route('users.create') }}">
+                    <button class="flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700">
+                        <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Adicionar Usuário
+                    </button>
                 </a>
             </div>
         </div>
@@ -96,42 +102,48 @@
             </div>
         </div>
 
-        <!-- Tabela de Usuários -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-900">Lista de Usuários</h2>
+        {{-- Tabela de Usuários --}}
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-6 flex items-center justify-between border-b">
+                <div class="flex items-center space-x-4">
+                    <svg class="h-6 w-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <h2 class="text-xl font-semibold text-gray-900">Lista de Usuários</h2>
+                </div>
 
-                <!-- Filtros -->
+                {{-- Filtros --}}
                 <div class="flex items-center space-x-3">
                     <div class="relative">
-                        <select id="filter-type" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                            <option value="">Todos os Tipos</option>
-                            <option value="aluno">Alunos</option>
-                            <option value="professor">Professores</option>
+                        <select id="filter-access-level" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="">Todos os Níveis</option>
                             <option value="admin">Administradores</option>
+                            <option value="operator">Operadores</option>
+                            <option value="viewer">Visualizadores</option>
                         </select>
                     </div>
 
                     <div class="relative">
-                        <select id="filter-status" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <select id="filter-group" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="">Todos os Grupos</option>
+                        </select>
+                    </div>
+
+                    <div class="relative">
+                        <select id="filter-status" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="">Todos os Status</option>
-                            <option value="ativo">Ativos</option>
-                            <option value="inativo">Inativos</option>
-                            <option value="bloqueado">Bloqueados</option>
+                            <option value="active">Ativos</option>
+                            <option value="inactive">Inativos</option>
                         </select>
                     </div>
 
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
-                        <input type="text" placeholder="Buscar usuários..."
-                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            id="search-input">
+                        <input type="text" placeholder="Buscar usuários..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md sm:text-sm" id="search-input">
                     </div>
                 </div>
             </div>
@@ -140,39 +152,21 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Usuário</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Email
-                            </th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Nível
-                                de Acesso</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Último Login</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status</th>
-                            <th scope="col" class="relative px-6 py-3">
-                                <span class="sr-only">Ações</span>
-                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nível de Acesso</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Login</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Controles</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="users-table-body">
                         <tr>
                             <td colspan="6" class="px-6 py-4 text-center">
                                 <div class="flex justify-center items-center">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                                            stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                        </path>
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                     <span>Carregando usuários...</span>
                                 </div>
@@ -185,7 +179,41 @@
     </div>
 
     <script>
+        let allUsers = []; // Armazena todos os usuários para filtragem
+        let allGroups = []; // Armazena todos os grupos
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Carrega os grupos para o filtro
+            fetchGroups();
+
+            // Função para buscar grupos
+            async function fetchGroups() {
+                try {
+                    const response = await fetch('api/groups');
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        allGroups = data.data;
+                        populateGroupFilter();
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar grupos:', error);
+                }
+            }
+
+            // Popula o filtro de grupos
+            function populateGroupFilter() {
+                const groupFilter = document.getElementById('filter-group');
+                groupFilter.innerHTML = '<option value="">Todos os Grupos</option>';
+
+                allGroups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.name.toLowerCase();
+                    option.textContent = group.name;
+                    groupFilter.appendChild(option);
+                });
+            }
+
             // Função para buscar usuários da API
             async function fetchUsers() {
                 try {
@@ -193,6 +221,7 @@
                     const data = await response.json();
 
                     if (data.status === 'success') {
+                        allUsers = data.data; // Armazena globalmente
                         renderUsers(data.data);
                         updateStats(data.data);
                     } else {
@@ -331,15 +360,65 @@
                 document.getElementById('inactive-users').textContent = inactiveUsers;
             }
 
-            document.getElementById('search-input').addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#users-table-body tr');
+            // Função para aplicar filtros
+            function applyFilters() {
+                const searchTerm = document.getElementById('search-input').value.toLowerCase();
+                const filterAccessLevel = document.getElementById('filter-access-level').value;
+                const filterGroup = document.getElementById('filter-group').value;
+                const filterStatus = document.getElementById('filter-status').value;
 
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                const filteredUsers = allUsers.filter(user => {
+                    // Filtro de busca por texto
+                    const userName = (user.name || '').toLowerCase();
+                    const userEmail = (user.email || '').toLowerCase();
+                    const matchesSearch = !searchTerm || userName.includes(searchTerm) || userEmail.includes(searchTerm);
+
+                    // Filtro de nível de acesso
+                    let matchesAccessLevel = true;
+                    if (filterAccessLevel) {
+                        if (filterAccessLevel === 'admin') {
+                            matchesAccessLevel = user.is_admin === "1" || user.is_admin === 1;
+                        } else if (filterAccessLevel === 'operator') {
+                            const isNotAdmin = user.is_admin !== "1" && user.is_admin !== 1;
+                            const hasAdminGroup = user.group_memberships && user.group_memberships.toLowerCase().includes('admins');
+                            matchesAccessLevel = isNotAdmin && hasAdminGroup;
+                        } else if (filterAccessLevel === 'viewer') {
+                            const isNotAdmin = user.is_admin !== "1" && user.is_admin !== 1;
+                            const noAdminGroup = !user.group_memberships || !user.group_memberships.toLowerCase().includes('admins');
+                            matchesAccessLevel = isNotAdmin && noAdminGroup;
+                        }
+                    }
+
+                    // Filtro de grupo
+                    let matchesGroup = true;
+                    if (filterGroup) {
+                        const userGroups = (user.group_memberships || '').toLowerCase();
+                        matchesGroup = userGroups.includes(filterGroup);
+                    }
+
+                    // Filtro de status
+                    let matchesStatus = true;
+                    if (filterStatus) {
+                        const isActive = user.disabled === "0" || user.disabled === 0;
+                        if (filterStatus === 'active') {
+                            matchesStatus = isActive;
+                        } else if (filterStatus === 'inactive') {
+                            matchesStatus = !isActive;
+                        }
+                    }
+
+                    return matchesSearch && matchesAccessLevel && matchesGroup && matchesStatus;
                 });
-            });
+
+                renderUsers(filteredUsers);
+                updateStats(filteredUsers);
+            }
+
+            // Event listeners para os filtros
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('filter-access-level').addEventListener('change', applyFilters);
+            document.getElementById('filter-group').addEventListener('change', applyFilters);
+            document.getElementById('filter-status').addEventListener('change', applyFilters);
 
             fetchUsers();
 

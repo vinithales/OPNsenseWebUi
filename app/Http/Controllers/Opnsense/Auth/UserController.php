@@ -205,29 +205,83 @@ class UserController extends Controller
                 'priv.*' => 'string'
             ]);
 
+            // Validar se os grupos informados existem e converter para GIDs
+            $groupGIDs = [];
+            if (isset($validated['groups']) && !empty($validated['groups'])) {
+                try {
+                    $availableGroups = $this->groupService->getGroups(false); // Sem contagem de membros
+
+                    Log::info('DEBUG - Resposta do GroupService:', [
+                        'total_groups' => count($availableGroups),
+                        'first_3_groups' => array_slice($availableGroups, 0, 3)
+                    ]);
+
+                    $groupNames = array_column($availableGroups, 'name');
+
+                    Log::info('Grupos disponíveis no sistema:', $groupNames);
+                    Log::info('Grupos solicitados para o usuário:', $validated['groups']);
+
+                    foreach ($validated['groups'] as $groupName) {
+                        if (!in_array($groupName, $groupNames)) {
+                            Log::warning("Grupo inválido: {$groupName}. Grupos disponíveis: " . implode(', ', $groupNames));
+                            return back()->withErrors(['groups' => "O grupo '{$groupName}' não existe no sistema."])->withInput();
+                        }
+
+                        // Encontrar o GID do grupo
+                        foreach ($availableGroups as $group) {
+                            if (isset($group['name']) && $group['name'] === $groupName) {
+                                if (isset($group['gid'])) {
+                                    $groupGIDs[] = $group['gid'];
+                                } else {
+                                    Log::warning("Grupo encontrado mas sem GID: " . json_encode($group));
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    Log::info('Grupos convertidos para GIDs:', [
+                        'nomes' => $validated['groups'],
+                        'gids' => $groupGIDs
+                    ]);
+
+                } catch (\Exception $e) {
+                    Log::error('Erro ao buscar grupos: ' . $e->getMessage());
+                    Log::error('Stack trace: ' . $e->getTraceAsString());
+                    // Continua sem validação se não conseguir buscar grupos
+                }
+            }
+
             $userData = [
-                'disabled' => $validated['disabled'] ?? '0',
-                'name' => $validated['name'],
-                'password' => $validated['password'] ?? '',
-                'scrambled_password' => '0',
-                'descr' => $validated['descr'] ?? '',
-                'email' => $validated['email'] ?? '',
-                'comment' => 'Usuário atualizado via API',
-                'landing_page' => '',
-                'language' => $validated['language'] ?? '',
-                'shell' => $validated['shell'] ?? '',
-                'expires' => $validated['expires'] ?? '',
-                'user.group_memberships' => isset($validated['groups']) ? implode(',', $validated['groups']) : '',
-                'priv' => isset($validated['priv']) ? implode(',', $validated['priv']) : '',
-                'otp_uri' => '',
-                'otp_seed' => '',
-                'authorizedkeys' => $validated['authorizedkeys'] ?? ''
+                'user' => [
+                    'disabled' => $validated['disabled'] ?? '0',
+                    'name' => $validated['name'],
+                    'password' => $validated['password'] ?? '',
+                    'scrambled_password' => '0',
+                    'descr' => $validated['descr'] ?? '',
+                    'email' => $validated['email'] ?? '',
+                    'comment' => 'Usuário atualizado via API',
+                    'landing_page' => '',
+                    'language' => $validated['language'] ?? '',
+                    'shell' => $validated['shell'] ?? '',
+                    'expires' => $validated['expires'] ?? '',
+                    'group_memberships' => !empty($groupGIDs) ? implode(',', $groupGIDs) : '',
+                    'priv' => isset($validated['priv']) ? implode(',', $validated['priv']) : '',
+                    'otp_uri' => '',
+                    'otp_seed' => '',
+                    'authorizedkeys' => $validated['authorizedkeys'] ?? ''
+                ]
             ];
 
-
-            $userData = array_filter($userData, function ($value) {
+            // Filtrar valores vazios dentro do array user
+            $userData['user'] = array_filter($userData['user'], function ($value) {
                 return $value !== null && $value !== '';
             });
+
+            Log::info('Dados do usuário que serão enviados para atualização:', [
+                'uuid' => $uuid,
+                'userData' => $userData
+            ]);
 
             if ($this->userService->updateUser($uuid, $userData)) {
                 return redirect()->route('users.index')

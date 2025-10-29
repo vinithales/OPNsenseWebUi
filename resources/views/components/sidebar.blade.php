@@ -27,16 +27,13 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('firewall.index') }}"
-                    class="flex items-center justify-between px-2 py-2 rounded-md {{ request()->routeIs('firewall.*') ? 'text-white bg-green-700' : 'text-gray-300 hover:bg-gray-700' }}">
+                <a href="{{ route('aliases.index') }}"
+                   class="flex items-center justify-between px-2 py-2 rounded-md {{ request()->routeIs('aliases.*') ? 'text-white bg-green-700' : 'text-gray-300 hover:bg-gray-700' }}">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 mr-2 {{ request()->routeIs('firewall.*') ? 'text-white' : 'text-gray-400' }}"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944c-1.554 0-3.036.315-4.418.914M4.796 5.864a12.022 12.022 0 00-1.042 3.142m-.483 4.22c.162 1.41.678 2.768 1.493 4.027m8.498.471c1.258-.816 2.37-1.93 3.185-3.188m.536-4.577a11.956 11.956 0 00-1.042-3.142">
-                            </path>
+                        <svg class="w-5 h-5 mr-2 {{ request()->routeIs('aliases.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 12h10M7 17h6"></path>
                         </svg>
-                        <span class="text-sm font-medium">Firewall</span>
+                        <span class="text-sm font-medium">Aliases</span>
                     </div>
                 </a>
             </li>
