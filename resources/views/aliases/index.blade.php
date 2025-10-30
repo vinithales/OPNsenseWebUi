@@ -62,7 +62,7 @@
     </div>
 </div>
 
-{{-- Modal: Criar/Editar Alias --}}
+{{-- Modal: Criar Alias --}}
 <div id="aliasModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
         <div class="mt-3">
@@ -75,8 +75,6 @@
                 </button>
             </div>
             <form id="aliasForm" class="space-y-4">
-                <input type="hidden" id="aliasUuid">
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nome *</label>
@@ -232,11 +230,6 @@ function renderAliases(aliases) {
                 <td class="px-6 py-4 text-sm text-gray-900 font-mono" title="${content}">${displayContent}</td>
                 <td class="px-6 py-4 text-sm text-gray-500">${description || '-'}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                    <button onclick="editAlias('${uuid}')" class="text-green-600 hover:text-green-800 mr-3" title="Editar">
-                        <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                    </button>
                     <button onclick="deleteAlias('${uuid}')" class="text-red-600 hover:text-red-800" title="Excluir">
                         <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -257,25 +250,14 @@ function updateStats() {
     }
 }
 
-// Abrir modal de alias (criar/editar)
-function openAliasModal(alias = null) {
+// Abrir modal de alias (criar)
+function openAliasModal() {
     const modal = document.getElementById('aliasModal');
     const title = document.getElementById('modalTitle');
 
-    if (alias) {
-        title.textContent = 'Editar Alias';
-        document.getElementById('aliasUuid').value = alias.uuid;
-        document.getElementById('aliasName').value = alias.name || alias['alias']?.name || '';
-        document.getElementById('aliasType').value = alias.type || alias['alias']?.type || 'host';
-        document.getElementById('aliasContent').value = alias.content || alias['alias']?.content || '';
-        document.getElementById('aliasDescription').value = alias.description || alias.descr || alias['alias']?.description || '';
-        document.getElementById('aliasEnabled').checked = alias.enabled !== '0';
-    } else {
-        title.textContent = 'Novo Alias';
-        document.getElementById('aliasForm').reset();
-        document.getElementById('aliasUuid').value = '';
-        document.getElementById('aliasEnabled').checked = true;
-    }
+    title.textContent = 'Novo Alias';
+    document.getElementById('aliasForm').reset();
+    document.getElementById('aliasEnabled').checked = true;
 
     modal.classList.remove('hidden');
 }
@@ -286,11 +268,8 @@ function closeAliasModal() {
     document.getElementById('aliasForm').reset();
 }
 
-// Salvar alias (criar ou atualizar)
+// Salvar alias (criar)
 async function saveAlias() {
-    const uuid = document.getElementById('aliasUuid').value;
-    const isEdit = !!uuid;
-
     const aliasData = {
         name: document.getElementById('aliasName').value,
         type: document.getElementById('aliasType').value,
@@ -300,11 +279,8 @@ async function saveAlias() {
     };
 
     try {
-        const url = isEdit ? `/api/aliases/${uuid}` : '/api/aliases';
-        const method = isEdit ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-            method: method,
+        const response = await fetch('/api/aliases', {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -316,28 +292,11 @@ async function saveAlias() {
 
         if (data.status === 'success') {
             closeAliasModal();
-            showNotification('success', data.message || 'Alias salvo com sucesso!');
+            showNotification('success', data.message || 'Alias criado com sucesso!');
             await applyAliasChanges();
             await loadAliases();
         } else {
-            throw new Error(data.message || 'Erro ao salvar alias');
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        showNotification('error', error.message);
-    }
-}
-
-// Editar alias
-async function editAlias(uuid) {
-    try {
-        const response = await fetch(`/api/aliases/${uuid}`);
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            openAliasModal(data.data);
-        } else {
-            throw new Error(data.message || 'Erro ao carregar alias');
+            throw new Error(data.message || 'Erro ao criar alias');
         }
     } catch (error) {
         console.error('Erro:', error);

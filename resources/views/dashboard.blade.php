@@ -22,7 +22,7 @@
                     <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
                     Sistema Online
                 </span>
-                <button class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <button onclick="loadStats()" class="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
                     <svg class="w-5 h-5 mr-2 -ml-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
@@ -44,7 +44,7 @@
                     </div>
                 </div>
                 <div>
-                    <p class="text-3xl font-semibold text-gray-900 mb-1">--</p>
+                    <p class="text-3xl font-semibold text-gray-900 mb-1" id="totalUsers">--</p>
                     <p class="text-sm text-gray-500">Usuários registrados</p>
                 </div>
             </div>
@@ -60,12 +60,26 @@
                     </div>
                 </div>
                 <div>
-                    <p class="text-3xl font-semibold text-gray-900 mb-1">--</p>
+                    <p class="text-3xl font-semibold text-gray-900 mb-1" id="totalGroups">--</p>
                     <p class="text-sm text-gray-500">Grupos criados</p>
                 </div>
             </div>
 
-
+            {{-- Total de Aliases --}}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">Total de Aliases</h3>
+                    <div class="flex items-center justify-center h-10 w-10 rounded-full bg-yellow-100 text-yellow-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-3xl font-semibold text-gray-900 mb-1" id="totalAliases">--</p>
+                    <p class="text-sm text-gray-500">Aliases configurados</p>
+                </div>
+            </div>
 
             {{-- Status do Sistema --}}
             <div class="bg-white rounded-lg shadow-sm p-6">
@@ -78,7 +92,7 @@
                     </div>
                 </div>
                 <div>
-                    <p class="text-3xl font-semibold text-green-600 mb-1">Online</p>
+                    <p class="text-3xl font-semibold text-green-600 mb-1" id="systemStatus">Online</p>
                     <p class="text-sm text-gray-500">Tudo funcionando</p>
                 </div>
             </div>
@@ -95,7 +109,7 @@
                 </div>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <a href="{{ route('users.create') }}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div class="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,8 +145,107 @@
                             <p class="text-xs text-gray-500">Upload de arquivo Excel</p>
                         </div>
                     </a>
+
+                    <a href="{{ route('aliases.index') }}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-center h-10 w-10 rounded-full bg-yellow-100 text-yellow-600">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-900">Gerenciar Aliases</p>
+                            <p class="text-xs text-gray-500">Grupos de IPs e redes</p>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- JavaScript para carregar estatísticas --}}
+    <script>
+        // Carregar estatísticas quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+        });
+
+        // Função para carregar estatísticas do dashboard
+        async function loadStats() {
+            try {
+                // Mostrar indicador de carregamento
+                updateStatsDisplay('--', '--', '--', 'Carregando...', 'text-gray-600');
+
+                const response = await fetch('/api/dashboard/stats', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const stats = data.data;
+
+                    // Atualizar os valores na interface
+                    updateStatsDisplay(
+                        stats.total_users,
+                        stats.total_groups,
+                        stats.total_aliases,
+                        stats.system_status === 'online' ? 'Online' : 'Offline',
+                        stats.system_status === 'online' ? 'text-green-600' : 'text-red-600'
+                    );
+
+                    console.log('Estatísticas carregadas:', stats);
+                } else {
+                    throw new Error(data.message || 'Erro ao carregar estatísticas');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+
+                // Mostrar erro na interface
+                updateStatsDisplay('Erro', 'Erro', 'Erro', 'Offline', 'text-red-600');
+
+                // Opcional: mostrar notificação de erro
+                showNotification('error', 'Erro ao carregar estatísticas do dashboard');
+            }
+        }
+
+        // Função para atualizar a exibição das estatísticas
+        function updateStatsDisplay(totalUsers, totalGroups, totalAliases, systemStatus, statusClass) {
+            const totalUsersElement = document.getElementById('totalUsers');
+            const totalGroupsElement = document.getElementById('totalGroups');
+            const totalAliasesElement = document.getElementById('totalAliases');
+            const systemStatusElement = document.getElementById('systemStatus');
+
+            if (totalUsersElement) {
+                totalUsersElement.textContent = totalUsers;
+            }
+
+            if (totalGroupsElement) {
+                totalGroupsElement.textContent = totalGroups;
+            }
+
+            if (totalAliasesElement) {
+                totalAliasesElement.textContent = totalAliases;
+            }
+
+            if (systemStatusElement) {
+                systemStatusElement.textContent = systemStatus;
+                systemStatusElement.className = `text-3xl font-semibold mb-1 ${statusClass}`;
+            }
+        }
+
+        // Função para mostrar notificações (opcional, se não existir no layout)
+        function showNotification(type, message) {
+            // Verifica se existe uma função de notificação global
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(type, message);
+            } else {
+                // Fallback simples
+                console.log(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+    </script>
 @endsection

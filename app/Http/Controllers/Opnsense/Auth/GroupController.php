@@ -85,7 +85,7 @@ class GroupController extends Controller
                     ->with('success', 'Grupo criado com sucesso!');
             }
 
-            return back()->with('error', 'Falha na criação do Grupo')->withInput();
+            return back()->with('error', 'Falha na criação do grupo')->withInput();
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
@@ -97,7 +97,7 @@ class GroupController extends Controller
         try {
             $group = $this->groupService->getGroup($id);
             if (!$group) {
-                return redirect()->route('groups.index')->with('error', 'Group not found');
+                return redirect()->route('groups.index')->with('error', 'Grupo não encontrado');
             }
 
             $group['uuid'] = $id;
@@ -140,11 +140,11 @@ class GroupController extends Controller
 
             if ($this->groupService->updateGroup($id, $data)) {
                 return redirect()->route('groups.index')
-                    ->with('success', 'Grupo criado com sucesso!');
+                    ->with('success', 'Grupo atualizado com sucesso!');
             }
 
 
-            return redirect()->route('groups.index')->with('Error', 'Error update Group');
+            return redirect()->route('groups.index')->with('error', 'Falha na atualização do grupo');
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
@@ -159,10 +159,10 @@ class GroupController extends Controller
             $result = $this->groupService->deleteGroup($id);
 
             if ($result === true || $result === 'true') {
-                return response()->json(['status' => 'success', 'message' => 'Group deleted successfully']);
+                return response()->json(['status' => 'success', 'message' => 'Grupo excluído com sucesso']);
             }
 
-            return response()->json(['status' => 'error', 'message' => 'Falha na exclusão do usuário'], 400);
+            return response()->json(['status' => 'error', 'message' => 'Falha na exclusão do grupo'], 400);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
