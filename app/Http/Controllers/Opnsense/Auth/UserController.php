@@ -102,7 +102,7 @@ class UserController extends Controller
                 'group' => 'required|array',
                 'group.*' => 'string',
                 'ra' => 'nullable|string|max:50',
-                'user_type' => 'required|in:aluno,professor,admin',
+                'user_type' => 'required|in:aluno,professor,funcionario,admin',
                 'comment' => 'nullable|string',
                 'expires' => 'nullable|date',
                 'user_shell' => 'nullable|string',
@@ -333,7 +333,7 @@ class UserController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'excel_file' => 'required|file|mimes:xlsx,xls|max:5120', // 5MB
-                'user_type' => 'required|in:aluno,professor',
+                'user_type' => 'required|in:aluno,professor,funcionario',
             ]);
 
             if ($validator->fails()) {

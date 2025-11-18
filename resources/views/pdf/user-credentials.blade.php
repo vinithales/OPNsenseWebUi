@@ -115,6 +115,9 @@
         .badge-professor {
             background-color: #007bff;
         }
+        .badge-funcionario {
+            background-color: #6f42c1;
+        }
     </style>
 </head>
 <body>
@@ -147,8 +150,8 @@
         </div>
 
         <div class="credential-row">
-            <div class="credential-label">E-mail:</div>
-            <div class="credential-value">{{ $user['email'] }}</div>
+            <div class="credential-label">Nome completo:</div>
+            <div class="credential-value">{{ $user['fullname'] }}</div>
         </div>
 
         <div class="credential-row">

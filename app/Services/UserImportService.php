@@ -51,7 +51,7 @@ class UserImportService
                 }
 
                 $ra = trim($row[0] ?? '');
-                $email = trim($row[1] ?? '');
+                $fullname = trim($row[1] ?? '');
 
                 // Validações
                 if (empty($ra)) {
@@ -59,8 +59,8 @@ class UserImportService
                     continue;
                 }
 
-                if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $errors[] = "Linha {$lineNumber}: E-mail inválido ou vazio";
+                if (empty($fullname)) {
+                    $errors[] = "Linha {$lineNumber}: Nome completo não pode estar vazio";
                     continue;
                 }
 
@@ -102,8 +102,8 @@ class UserImportService
                     $userData = [
                         'user' => [
                             'name' => $ra, // Usando RA como nome de usuário
-                            'fullname' => $email, // Nome completo (pode ser melhorado)
-                            'email' => $email,
+                            'fullname' => $fullname, // Nome completo fornecido no Excel
+                            'email' => '',
                             'password' => $password,
                             'group_memberships' => $groupId, // Vincula ao grupo encontrado
                             'comment' => $comment,
@@ -119,35 +119,35 @@ class UserImportService
                     if ($created) {
                         $imported[] = [
                             'ra' => $ra,
-                            'email' => $email,
+                            'fullname' => $fullname,
                             'user_type' => $userType,
                         ];
 
                         // Armazena credenciais para PDF (LGPD: temporário, não persistido)
                         $credentials[] = [
                             'ra' => $ra,
-                            'email' => $email,
+                            'fullname' => $fullname,
                             'password' => $password, // Senha em texto simples apenas para PDF
                             'user_type' => $userType,
                         ];
 
                         Log::info("Usuário importado com sucesso no OPNsense", [
                             'ra' => $ra,
-                            'email' => $email,
+                            'fullname' => $fullname,
                             'user_type' => $userType
                         ]);
                     } else {
                         $errors[] = "Linha {$lineNumber}: Erro ao criar usuário no OPNsense";
                         Log::error("Falha ao criar usuário no OPNsense", [
                             'ra' => $ra,
-                            'email' => $email
+                            'fullname' => $fullname
                         ]);
                     }
                 } catch (\Exception $e) {
                     $errors[] = "Linha {$lineNumber}: Erro ao criar usuário - " . $e->getMessage();
                     Log::error("Erro ao importar usuário", [
                         'ra' => $ra,
-                        'email' => $email,
+                        'fullname' => $fullname,
                         'error' => $e->getMessage()
                     ]);
                 }
@@ -211,7 +211,7 @@ class UserImportService
 
         // Cabeçalhos
         $sheet->setCellValue('A1', 'RA');
-        $sheet->setCellValue('B1', 'E-mail');
+        $sheet->setCellValue('B1', 'Nome completo');
 
         // Estilização do cabeçalho
         $headerStyle = [
@@ -232,9 +232,9 @@ class UserImportService
 
         // Exemplos (linhas 2 e 3)
         $sheet->setCellValue('A2', '123456');
-        $sheet->setCellValue('B2', 'aluno@exemplo.com');
+        $sheet->setCellValue('B2', 'João da Silva');
         $sheet->setCellValue('A3', '789012');
-        $sheet->setCellValue('B3', 'professor@exemplo.com');
+        $sheet->setCellValue('B3', 'Maria Souza');
 
         return $spreadsheet;
     }

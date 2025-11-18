@@ -23,16 +23,16 @@ class LoginController extends Controller
         if (Auth::attempt($credentials)) {
             // Autenticado com sucesso
             $request->session()->regenerate();
-            
+
             Log::info('Usuário autenticado com sucesso, redirecionando para dashboard');
-            
+
             // Tenta redirecionar para a URL pretendida ou para o dashboard
             return redirect()->intended(route('dashboard'));
         }
 
         // Falha na autenticação
         Log::warning('Tentativa de login falhada', ['email' => $credentials['email']]);
-        
+
         return back()->withErrors([
             'email' => 'Credenciais inválidas.',
         ])->withInput();

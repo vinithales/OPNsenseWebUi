@@ -38,12 +38,12 @@
                     </div>
                     <div class="ml-4 flex-grow">
                         <h2 class="text-2xl font-bold text-gray-900"> Importação via Excel</h2>
-                        <p class="text-gray-700 mt-2">Importe alunos e professores facilmente através de arquivo Excel (.xlsx)</p>
+                        <p class="text-gray-700 mt-2">Importe alunos, professores e funcionários facilmente através de arquivo Excel (.xlsx)</p>
 
                         <div class="mt-4 bg-white rounded-lg p-4 border border-indigo-200">
                             <h3 class="font-semibold text-gray-900 mb-2">Como funciona:</h3>
                             <ul class="list-disc list-inside text-gray-700 space-y-1">
-                                <li>Baixe o template Excel com as colunas: <strong>RA</strong> e <strong>E-mail</strong></li>
+                                <li>Baixe o template Excel com as colunas: <strong>RA</strong> e <strong>Nome completo</strong></li>
                                 <li>Preencha os dados dos usuários (um por linha)</li>
                                 <li>Senhas seguras são geradas automaticamente</li>
                                 <li>Após importar, baixe o PDF com as credenciais para entrega aos usuários</li>
@@ -59,6 +59,7 @@
                                     <select name="user_type" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                         <option value="aluno">Aluno</option>
                                         <option value="professor">Professor</option>
+                                        <option value="funcionario">Funcionário</option>
                                     </select>
                                 </div>
 
