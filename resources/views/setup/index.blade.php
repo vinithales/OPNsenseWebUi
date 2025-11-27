@@ -7,17 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <div class="max-w-4xl mx-auto">
-            <!-- Header -->
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 rounded-full mb-4">
-                    <i class="fas fa-cog text-white text-3xl"></i>
-                </div>
-                <h1 class="text-4xl font-bold text-gray-800 mb-2">Bem-vindo ao OPNsense Web UI</h1>
-                <p class="text-gray-600">Configure o sistema para começar a usar</p>
+<body class="bg-gray-800 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-3xl mx-auto px-4 py-8">
+        <!-- Header alinhado com login -->
+        <div class="flex flex-col items-center mb-8 text-center">
+            <div class="bg-green-600 p-3 rounded-lg shadow-md mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5.002a12.052 12.052 0 00-1.884 5.922c.287 4.155 3.54 7.63 7.718 8.132a1.125 1.125 0 001.13 0c4.178-.502 7.43-3.977 7.718-8.132a12.052 12.052 0 00-1.884-5.922A11.954 11.954 0 0110 1.944zM9 12.121l-2.828-2.828a.75.75 0 111.06-1.062L9 10.001l4.768-4.768a.75.75 0 111.06 1.06L9.53 12.65a.75.75 0 01-1.06 0l-.53-.53z" clip-rule="evenodd" />
+                </svg>
             </div>
+            <h1 class="text-3xl font-bold text-white">OPNsense Manager</h1>
+            <p class="text-gray-400 mt-1">Configuração inicial do sistema</p>
+        </div>
 
             @if($errors->any())
                 <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded">
@@ -43,21 +44,24 @@
                 </div>
             @endif
 
-            <form action="{{ route('setup.store') }}" method="POST" class="bg-white rounded-lg shadow-lg" x-data="{ activeTab: 'admin' }">
+            <form action="{{ route('setup.store') }}" method="POST" class="bg-white p-8 rounded-lg shadow-xl space-y-6" x-data="{ activeTab: 'admin' }">
                 @csrf
+
+                <!-- Título do Card -->
+                <h2 class="text-2xl font-bold text-center text-gray-800">Configuração Inicial</h2>
 
                 <!-- Tabs -->
                 <div class="border-b border-gray-200">
                     <nav class="flex -mb-px">
-                        <button type="button" @click="activeTab = 'admin'" :class="activeTab === 'admin' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
+                        <button type="button" @click="activeTab = 'admin'" :class="activeTab === 'admin' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
                             <i class="fas fa-user-shield mr-2"></i>
                             Administrador
                         </button>
-                        <button type="button" @click="activeTab = 'opnsense'" :class="activeTab === 'opnsense' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
+                        <button type="button" @click="activeTab = 'opnsense'" :class="activeTab === 'opnsense' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
                             <i class="fas fa-network-wired mr-2"></i>
                             OPNsense
                         </button>
-                        <button type="button" @click="activeTab = 'advanced'" :class="activeTab === 'advanced' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
+                        <button type="button" @click="activeTab = 'advanced'" :class="activeTab === 'advanced' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
                             <i class="fas fa-sliders-h mr-2"></i>
                             Avançado
                         </button>
@@ -203,15 +207,14 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="bg-gray-50 px-8 py-4 border-t border-gray-200 rounded-b-lg flex justify-between items-center">
+                <div class="bg-gray-50 px-6 py-4 border border-gray-200 rounded-md flex justify-between items-center">
                     <p class="text-sm text-gray-500">* Campos obrigatórios</p>
-                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    <button type="submit" class="inline-flex items-center px-6 py-2.5 bg-green-600 border border-transparent rounded-md font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                         <i class="fas fa-check mr-2"></i>
                         Concluir Configuração
                     </button>
                 </div>
             </form>
-        </div>
     </div>
 
     <!-- Alpine.js -->
