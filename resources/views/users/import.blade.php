@@ -27,8 +27,190 @@
             </div>
         </div>
 
+        {{-- Mensagens de Erro e Avisos no Topo --}}
+        @if(session('import_errors') && count(session('import_errors')) > 0)
+        <div class="mb-6 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-md">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 flex-grow">
+                    <h4 class="text-lg font-semibold text-yellow-800 mb-2">Erros encontrados:</h4>
+                    <ul class="list-disc list-inside text-yellow-700 text-sm space-y-1">
+                        @foreach(session('import_errors') as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(session('success'))
+        <div class="mb-6 p-4 bg-green-50 border-2 border-green-400 rounded-md">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div class="mb-6 p-4 bg-red-50 border-2 border-red-400 rounded-md">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(session('warning'))
+        <div class="mb-6 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-md">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-yellow-800">{{ session('warning') }}</p>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="space-y-8">
-            {{-- Seção de Importação via Excel (Nova Funcionalidade) --}}
+            {{-- Seção de Importação Padrão da Faculdade (PRINCIPAL) --}}
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg shadow-lg p-6 border-l-4 border-green-600">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4 flex-grow">
+                        <div class="flex items-center gap-2 mb-2">
+                            <h2 class="text-2xl font-bold text-gray-900">Importação Padrão da Faculdade</h2>
+                            <span class="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">RECOMENDADO</span>
+                        </div>
+                        <p class="text-gray-700 mt-2">Formato padrão institucional com login e senha automáticos baseados no RA</p>
+
+                        <div class="mt-4 bg-white rounded-lg p-4 border border-green-200">
+                            <h3 class="font-semibold text-gray-900 mb-2">Formato do arquivo:</h3>
+                            <ul class="list-disc list-inside text-gray-700 space-y-1">
+                                <li><strong>RA_Matricula</strong> - Número de matrícula do usuário</li>
+                                <li><strong>Nome</strong> - Nome completo</li>
+                                <li><strong>Grupo</strong> - Grupo de acesso (ex: Fatec Administrativo, Fatec Discentes ADS Manhã)</li>
+                                <li><strong>Login</strong> - Login gerado automaticamente (formato: ad + RA ou di + código)</li>
+                                <li><strong>Senha</strong> - Senha padrão gerada: <code class="bg-gray-200 px-2 py-1 rounded">fatec</code></li>
+                                <li><strong>Importar</strong> - Marcar com "S" para importar</li>
+                            </ul>
+                            <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                                <p class="text-sm text-blue-800"><strong>Dica:</strong> O template já vem com exemplos. Login e senha são gerados automaticamente se não informados.</p>
+                            </div>
+                        </div>
+
+                        <form action="{{ route('users.import.faculty.process') }}" method="POST" enctype="multipart/form-data" class="mt-6">
+                            @csrf
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Excel (.xlsx)</label>
+                                <input type="file" name="excel_file" accept=".xlsx,.xls" required class="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-green-500 focus:border-green-500 p-2">
+                            </div>
+
+                            <div class="flex gap-3">
+                                <a href="{{ route('users.import.faculty.template') }}" class="inline-flex items-center px-4 py-2 bg-white border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 hover:bg-green-50">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    Baixar Template Padrão
+                                </a>
+
+                                <button type="submit" class="inline-flex items-center px-6 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    Processar Importação
+                                </button>
+                            </div>
+                        </form>
+
+                        @if(session('show_faculty_pdf_button'))
+                        <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                            <p class="text-green-800 mb-3 font-semibold">Importação concluída com sucesso!</p>
+                            <p class="text-green-700 text-sm mb-3">Baixe o PDF com as credenciais para distribuir aos usuários:</p>
+                            <a href="{{ route('users.import.faculty.credentials.pdf') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                Baixar PDF com Credenciais
+                            </a>
+                        </div>
+                        @endif
+
+                        @if(session('show_create_groups_confirmation'))
+                        <div class="mt-4 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-md">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3 flex-grow">
+                                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">Grupos não encontrados no sistema</h3>
+                                    <p class="text-yellow-700 mb-3">Os seguintes grupos não existem no sistema e precisam ser criados para continuar a importação:</p>
+                                    <ul class="list-disc list-inside text-yellow-700 mb-4 space-y-1">
+                                        @foreach(session('missing_groups', []) as $group)
+                                            <li><strong>{{ $group }}</strong></li>
+                                        @endforeach
+                                    </ul>
+                                    <p class="text-yellow-800 font-medium mb-4">Deseja criar esses grupos automaticamente e continuar com a importação?</p>
+                                    <div class="flex gap-3">
+                                        <form action="{{ route('users.import.faculty.reprocess') }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                                Sim, Criar Grupos e Importar
+                                            </button>
+                                        </form>
+                                        <a href="{{ route('users.import') }}" class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-400">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                            Cancelar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Divisor --}}
+            <div class="border-t-2 border-gray-300 pt-8">
+                <h2 class="text-lg font-semibold text-gray-600 mb-2">Outros Métodos de Importação</h2>
+                <p class="text-sm text-gray-500">Métodos alternativos para casos específicos</p>
+            </div>
+
+            {{-- Seção de Importação via Excel (Por Grupo) --}}
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
@@ -37,8 +219,8 @@
                         </svg>
                     </div>
                     <div class="ml-4 flex-grow">
-                        <h2 class="text-2xl font-bold text-gray-900"> Importação via Excel</h2>
-                        <p class="text-gray-700 mt-2">Importe alunos, professores e funcionários facilmente através de arquivo Excel (.xlsx)</p>
+                        <h2 class="text-2xl font-bold text-gray-900">Importação por Grupo</h2>
+                        <p class="text-gray-700 mt-2">Importe alunos, professores e funcionários em um grupo específico</p>
 
                         <div class="mt-4 bg-white rounded-lg p-4 border border-indigo-200">
                             <h3 class="font-semibold text-gray-900 mb-2">Como funciona:</h3>
@@ -88,7 +270,7 @@
 
                         @if(session('show_pdf_button'))
                         <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                            <p class="text-green-800 mb-3">✅ Importação concluída! Baixe o PDF com as credenciais:</p>
+                            <p class="text-green-800 mb-3">Importação concluída! Baixe o PDF com as credenciais:</p>
                             <a href="{{ route('users.import.credentials.pdf') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
@@ -97,23 +279,12 @@
                             </a>
                         </div>
                         @endif
-
-                        @if(session('import_errors') && count(session('import_errors')) > 0)
-                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                            <h4 class="font-semibold text-yellow-800 mb-2">⚠️ Erros encontrados:</h4>
-                            <ul class="list-disc list-inside text-yellow-700 text-sm space-y-1">
-                                @foreach(session('import_errors') as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                        @endif
                     </div>
                 </div>
             </div>
 
             <div class="border-t-2 border-gray-200 pt-8">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">📄 Importação via CSV (Método Legado)</h2>
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Importação via CSV (Método Legado)</h2>
             </div>
 
             <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">

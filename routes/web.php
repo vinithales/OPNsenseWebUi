@@ -66,6 +66,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/users/import/excel/process', [UserController::class, 'processExcelImport'])->name('users.import.excel.process');
     Route::get('/users/import/excel/credentials-pdf', [UserController::class, 'downloadCredentialsPdf'])->name('users.import.credentials.pdf');
 
+    // Import - Padrão Faculdade
+    Route::get('/users/import/faculty/template', [UserController::class, 'downloadFacultyTemplate'])->name('users.import.faculty.template');
+    Route::post('/users/import/faculty/process', [UserController::class, 'processFacultyExcelImport'])->name('users.import.faculty.process');
+    Route::post('/users/import/faculty/reprocess-with-groups', [UserController::class, 'reprocessFacultyImportWithGroups'])->name('users.import.faculty.reprocess');
+    Route::get('/users/import/faculty/credentials-pdf', [UserController::class, 'downloadFacultyCredentialsPdf'])->name('users.import.faculty.credentials.pdf');
+
     // Import - CSV (legado)
     Route::get('/users/import/template', [UserController::class, 'downloadTemplate'])->name('users.import.template');
     Route::post('/users/import/process', [UserController::class, 'processImport'])->name('users.import.process');

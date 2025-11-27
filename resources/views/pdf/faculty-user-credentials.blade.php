@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credenciais de Acesso - OPNsense Web UI</title>
+    <title>Credenciais de Acesso - Faculdade</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -63,13 +63,13 @@
         .credential-label {
             display: table-cell;
             font-weight: bold;
-            width: 30%;
+            width: 35%;
             color: #555;
             vertical-align: top;
         }
         .credential-value {
             display: table-cell;
-            width: 70%;
+            width: 65%;
             background-color: #fff;
             padding: 8px;
             border: 1px solid #dee2e6;
@@ -108,22 +108,14 @@
             font-size: 9pt;
             font-weight: bold;
             color: #fff;
-        }
-        .badge-aluno {
-            background-color: #28a745;
-        }
-        .badge-professor {
             background-color: #007bff;
-        }
-        .badge-funcionario {
-            background-color: #6f42c1;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Credenciais de Acesso</h1>
-        <p><strong>Sistema OPNsense Web UI - Controle de Acesso à Internet</strong></p>
+        <h1>Credenciais de Acesso - Sistema Faculdade</h1>
+        <p><strong>Sistema OPNsense - Controle de Acesso à Internet</strong></p>
         <p>Gerado em: {{ $generated_at }}</p>
     </div>
 
@@ -134,29 +126,39 @@
 
     <div class="info-box">
         <p><strong>Total de usuários:</strong> {{ $total }}</p>
-        <p><strong>Instruções:</strong> Use as credenciais abaixo para acessar o sistema. A senha é gerada automaticamente e deve ser alterada no primeiro acesso.</p>
+        <p><strong>Instruções:</strong> Use as credenciais abaixo para acessar o sistema. Recomendamos alterar a senha no primeiro acesso.</p>
     </div>
 
     @foreach($credentials as $index => $user)
     <div class="credential-card">
         <h3>
             Usuário {{ $index + 1 }} de {{ $total }}
-            <span class="badge badge-{{ $user['user_type'] }}">{{ strtoupper($user['user_type']) }}</span>
+            <span class="badge">{{ strtoupper($user['grupo']) }}</span>
         </h3>
 
         <div class="credential-row">
-            <div class="credential-label">RA (Registro):</div>
+            <div class="credential-label">RA/Matrícula:</div>
             <div class="credential-value">{{ $user['ra'] }}</div>
         </div>
 
         <div class="credential-row">
-            <div class="credential-label">Nome completo:</div>
-            <div class="credential-value">{{ $user['fullname'] }}</div>
+            <div class="credential-label">Nome Completo:</div>
+            <div class="credential-value">{{ $user['nome'] }}</div>
         </div>
 
         <div class="credential-row">
-            <div class="credential-label">Senha Inicial:</div>
-            <div class="credential-value password-highlight">{{ $user['password'] }}</div>
+            <div class="credential-label">Grupo:</div>
+            <div class="credential-value">{{ $user['grupo'] }}</div>
+        </div>
+
+        <div class="credential-row">
+            <div class="credential-label">Login (Usuário):</div>
+            <div class="credential-value" style="background-color: #e7f3ff; border-color: #0066cc; font-weight: bold;">{{ $user['login'] }}</div>
+        </div>
+
+        <div class="credential-row">
+            <div class="credential-label">Senha:</div>
+            <div class="credential-value password-highlight">{{ $user['senha'] }}</div>
         </div>
 
         <div class="credential-row">
@@ -167,16 +169,17 @@
         <div style="margin-top: 15px; padding: 10px; background-color: #e7f3ff; border-left: 4px solid #0066cc; font-size: 9pt;">
             <strong>Importante:</strong>
             <ul style="margin: 5px 0; padding-left: 15px;">
-                <li>Altere sua senha no primeiro acesso para garantir a segurança da sua conta</li>
+                <li>Use o <strong>Login</strong> e <strong>Senha</strong> acima para acessar o sistema</li>
+                <li>Altere sua senha no primeiro acesso para garantir a segurança</li>
                 <li><strong>Guarde o código de redefinição</strong> - você precisará dele se esquecer sua senha</li>
-                <li>Para redefinir sua senha, acesse a página de redefinição e informe seu RA + código</li>
+                <li>Para redefinir senha: acesse a página de redefinição com seu RA + código</li>
             </ul>
         </div>
     </div>
     @endforeach
 
     <div class="footer">
-        <p><strong>Suporte Técnico</strong></p>
+        <p><strong>Suporte Técnico - Faculdade</strong></p>
         <p>Em caso de dúvidas ou problemas, entre em contato com o setor de TI.</p>
         <p style="margin-top: 10px; font-size: 8pt;">
             Este documento foi gerado automaticamente pelo sistema OPNsense Web UI.<br>

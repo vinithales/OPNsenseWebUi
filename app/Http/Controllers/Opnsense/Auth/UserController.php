@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Opnsense\Auth;
 use App\Services\Opnsense\UserService;
 use App\Services\Opnsense\GroupService;
 use App\Services\UserImportService;
+use App\Services\FacultyUserImportService;
 use App\Services\UserCredentialsPdfService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -20,17 +21,20 @@ class UserController extends Controller
     protected $userService;
     protected $groupService;
     protected $importService;
+    protected $facultyImportService;
     protected $pdfService;
 
     public function __construct(
         UserService $userService,
         GroupService $groupService,
         UserImportService $importService,
+        FacultyUserImportService $facultyImportService,
         UserCredentialsPdfService $pdfService
     ) {
         $this->userService = $userService;
         $this->groupService = $groupService;
         $this->importService = $importService;
+        $this->facultyImportService = $facultyImportService;
         $this->pdfService = $pdfService;
     }
 
@@ -627,4 +631,202 @@ class UserController extends Controller
             'message' => $result ? 'Usuário excluído com sucesso' : 'Falha ao excluir usuário'
         ];
     }
+
+    /**
+     * ===============================================
+     * Importação Padrão da Faculdade
+     * ===============================================
+     */
+
+    /**
+     * Gera e faz download do template Excel padrão da faculdade
+     */
+    public function downloadFacultyTemplate()
+    {
+        try {
+            $spreadsheet = $this->facultyImportService->createTemplate();
+
+            $writer = new Xlsx($spreadsheet);
+            $filename = 'template-importacao-faculdade-' . date('Y-m-d') . '.xlsx';
+
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+
+            $writer->save('php://output');
+            exit;
+        } catch (\Exception $e) {
+            Log::error('Erro ao gerar template Excel da faculdade: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao gerar template: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Processa importação Excel padrão da faculdade
+     * Formato: RA_Matricula | Nome | Grupo | Login | Senha | Importar
+     */
+    public function processFacultyExcelImport(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'excel_file' => 'required|file|mimes:xlsx,xls|max:10240',
+            ], [
+                'excel_file.required' => 'O arquivo Excel é obrigatório',
+                'excel_file.mimes' => 'O arquivo deve ser no formato Excel (.xlsx ou .xls)',
+                'excel_file.max' => 'O arquivo não pode ser maior que 10MB',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            $file = $request->file('excel_file');
+            $filePath = $file->getRealPath();
+
+            // Verifica se deve criar grupos automaticamente
+            $createGroups = $request->input('create_groups', false);
+
+            // Processa importação
+            $result = $this->facultyImportService->importFromExcel($filePath, $createGroups);
+
+            // Se houver grupos ausentes e não foi confirmada a criação, pede confirmação
+            if (!empty($result['missing_groups']) && !$createGroups) {
+                // Salva o arquivo temporariamente na sessão para reprocessar depois
+                $tempPath = storage_path('app/temp/' . uniqid('import_') . '.xlsx');
+                if (!file_exists(dirname($tempPath))) {
+                    mkdir(dirname($tempPath), 0777, true);
+                }
+                copy($filePath, $tempPath);
+
+                session(['temp_import_file' => $tempPath]);
+                session(['missing_groups' => $result['missing_groups']]);
+
+                return redirect()->back()
+                    ->with('warning', 'Alguns grupos não existem no sistema.')
+                    ->with('missing_groups', $result['missing_groups'])
+                    ->with('show_create_groups_confirmation', true)
+                    ->with('import_errors', $result['errors']);
+            }
+
+            // Limpa arquivo temporário se existir
+            if (session('temp_import_file')) {
+                $tempFile = session('temp_import_file');
+                if (file_exists($tempFile)) {
+                    unlink($tempFile);
+                }
+                session()->forget('temp_import_file');
+                session()->forget('missing_groups');
+            }
+
+            if ($result['success']) {
+                // Armazena credenciais na sessão para geração de PDF
+                session(['faculty_import_credentials' => $result['credentials']]);
+
+                $message = "{$result['total_imported']} usuários importados com sucesso!";
+
+                if ($result['total_errors'] > 0) {
+                    $message .= " {$result['total_errors']} erros encontrados.";
+                }
+
+                return redirect()->back()
+                    ->with('success', $message)
+                    ->with('import_errors', $result['errors'])
+                    ->with('show_faculty_pdf_button', true);
+            } else {
+                return redirect()->back()
+                    ->with('error', 'Nenhum usuário foi importado.')
+                    ->with('import_errors', $result['errors']);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao processar importação Excel da faculdade: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao processar arquivo: ' . $e->getMessage());
+        }
+    }
+
+    public function reprocessFacultyImportWithGroups(Request $request)
+    {
+        try {
+            $tempFile = session('temp_import_file');
+
+            if (!$tempFile || !file_exists($tempFile)) {
+                return redirect()->back()
+                    ->with('error', 'Arquivo de importação não encontrado. Por favor, faça o upload novamente.');
+            }
+
+            // Processa importação criando grupos automaticamente
+            $result = $this->facultyImportService->importFromExcel($tempFile, true);
+
+            // Limpa arquivo temporário
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+            session()->forget('temp_import_file');
+            session()->forget('missing_groups');
+
+            if ($result['success']) {
+                session(['faculty_import_credentials' => $result['credentials']]);
+
+                $message = "{$result['total_imported']} usuários importados com sucesso!";
+
+                if (!empty($result['missing_groups'])) {
+                    $message .= " Grupos criados: " . implode(', ', $result['missing_groups']);
+                }
+
+                if ($result['total_errors'] > 0) {
+                    $message .= " {$result['total_errors']} erros encontrados.";
+                }
+
+                return redirect()->route('users.import')
+                    ->with('success', $message)
+                    ->with('import_errors', $result['errors'])
+                    ->with('show_faculty_pdf_button', true);
+            } else {
+                return redirect()->route('users.import')
+                    ->with('error', 'Nenhum usuário foi importado.')
+                    ->with('import_errors', $result['errors']);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao reprocessar importação: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao processar importação: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Gerar e baixar PDF com credenciais dos usuários importados (padrão faculdade)
+     */
+    public function downloadFacultyCredentialsPdf()
+    {
+        try {
+            $credentials = session('faculty_import_credentials', []);
+
+            if (empty($credentials)) {
+                return redirect()->back()
+                    ->with('error', 'Nenhuma credencial disponível para gerar PDF.');
+            }
+
+            // Gera PDF usando o serviço existente
+            $pdf = $this->pdfService->downloadFacultyCredentialsPdf($credentials);
+
+            // Limpa credenciais da sessão
+            session()->forget('faculty_import_credentials');
+
+            return $pdf;
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao gerar PDF de credenciais da faculdade: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao gerar PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reprocessar importação com criação de grupos
+     */
 }

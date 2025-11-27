@@ -57,4 +57,30 @@ class UserCredentialsPdfService
 
         return $pdf->stream();
     }
+
+    /**
+     * Gera PDF com credenciais da importação padrão da faculdade
+     *
+     * @param array $credentials Array com dados dos usuários (ra, nome, grupo, login, senha, reset_code)
+     * @return \Illuminate\Http\Response
+     */
+    public function downloadFacultyCredentialsPdf(array $credentials)
+    {
+        // Prepara dados para o PDF
+        $data = [
+            'credentials' => $credentials,
+            'generated_at' => now()->format('d/m/Y H:i:s'),
+            'total' => count($credentials),
+        ];
+
+        // Gera PDF usando a view específica
+        $pdf = Pdf::loadView('pdf.faculty-user-credentials', $data);
+
+        // Configura orientação e tamanho
+        $pdf->setPaper('A4', 'portrait');
+
+        $filename = 'credenciais_faculdade_' . now()->format('Y-m-d_His') . '.pdf';
+
+        return $pdf->download($filename);
+    }
 }
