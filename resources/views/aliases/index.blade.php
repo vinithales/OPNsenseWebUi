@@ -59,6 +59,27 @@
                 </tbody>
             </table>
         </div>
+        <!-- Paginação -->
+        <div class="px-6 py-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3" id="aliases-pagination" style="display:none">
+            <div class="flex items-center gap-3">
+                <div class="text-sm text-gray-600" id="aliases-pagination-info"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">Por página:</span>
+                    <select id="aliases-page-size" class="border rounded px-2 py-1 text-sm">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 md:justify-end">
+                <button id="aliases-prev" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-50">Anterior</button>
+                <div id="aliases-page-numbers" class="flex items-center gap-1"></div>
+                <span id="aliases-page-indicator" class="text-sm text-gray-700"></span>
+                <button id="aliases-next" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-50">Próxima</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -124,6 +145,9 @@
 // Estado global
 let allAliases = [];
 let isLoading = false;
+let currentPage = 1;
+let pageSize = 20;
+let currentAliasesList = [];
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
@@ -166,7 +190,9 @@ async function loadAliases() {
 
         if (data.status === 'success') {
             allAliases = Array.isArray(data.data) ? data.data : [];
-            renderAliases(allAliases);
+            const totalPages = Math.max(1, Math.ceil(allAliases.length / pageSize));
+            currentPage = Math.min(currentPage, totalPages);
+            renderAliasesPaginated(allAliases);
             updateStats();
         } else {
             throw new Error(data.message || 'Erro ao carregar aliases');
@@ -239,6 +265,59 @@ function renderAliases(aliases) {
             </tr>
         `;
     }).join('');
+}
+
+// Renderização paginada
+function renderAliasesPaginated(list) {
+    const total = list.length;
+    const start = (currentPage - 1) * pageSize;
+    const pageItems = list.slice(start, start + pageSize);
+    renderAliases(pageItems);
+
+    const wrap = document.getElementById('aliases-pagination');
+    const info = document.getElementById('aliases-pagination-info');
+    const indicator = document.getElementById('aliases-page-indicator');
+    const prevBtn = document.getElementById('aliases-prev');
+    const nextBtn = document.getElementById('aliases-next');
+    const sizeSel = document.getElementById('aliases-page-size');
+    const numbers = document.getElementById('aliases-page-numbers');
+
+    wrap.style.display = '';
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    info.textContent = `${total === 0 ? 0 : start + 1}-${Math.min(start + pageSize, total)} de ${total}`;
+    indicator.textContent = `Página ${currentPage} de ${totalPages}`;
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage >= totalPages;
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderAliasesPaginated(list); } };
+    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderAliasesPaginated(list); } };
+
+    currentAliasesList = list;
+    if (sizeSel && parseInt(sizeSel.value, 10) !== pageSize) sizeSel.value = String(pageSize);
+    sizeSel.onchange = () => { pageSize = parseInt(sizeSel.value, 10) || 20; currentPage = 1; renderAliasesPaginated(currentAliasesList); };
+
+    numbers.innerHTML = '';
+    const makeBtn = (p, label = null, disabled = false) => {
+        const b = document.createElement('button');
+        b.className = `px-2.5 py-1 rounded border text-sm ${p === currentPage ? 'bg-gray-100 font-semibold' : 'hover:bg-gray-50'}`;
+        b.textContent = label || String(p);
+        b.disabled = disabled || p === currentPage;
+        b.onclick = () => { currentPage = p; renderAliasesPaginated(list); };
+        return b;
+    };
+    const addEllipsis = () => { const s = document.createElement('span'); s.className='px-1 text-gray-500'; s.textContent='…'; numbers.appendChild(s); };
+    const totalToShow = 5;
+    const totalPagesInt = totalPages;
+    if (totalPagesInt <= totalToShow + 2) {
+        for (let p=1;p<=totalPagesInt;p++) numbers.appendChild(makeBtn(p));
+    } else {
+        numbers.appendChild(makeBtn(1));
+        let startP = Math.max(2, currentPage-2);
+        let endP = Math.min(totalPagesInt-1, currentPage+2);
+        if (startP>2) addEllipsis();
+        for (let p=startP;p<=endP;p++) numbers.appendChild(makeBtn(p));
+        if (endP<totalPagesInt-1) addEllipsis();
+        numbers.appendChild(makeBtn(totalPagesInt));
+    }
 }
 
 // Atualizar estatísticas

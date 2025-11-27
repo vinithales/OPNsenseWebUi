@@ -175,12 +175,36 @@
                     </tbody>
                 </table>
             </div>
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3" id="users-pagination" style="display:none">
+                <div class="flex items-center gap-3">
+                    <div class="text-sm text-gray-600" id="users-pagination-info"></div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600">Por página:</span>
+                        <select id="users-page-size" class="border rounded px-2 py-1 text-sm">
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 md:justify-end">
+                    <button id="users-prev" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-50">Anterior</button>
+                    <div id="users-page-numbers" class="flex items-center gap-1"></div>
+                    <span id="users-page-indicator" class="text-sm text-gray-700"></span>
+                    <button id="users-next" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-50">Próxima</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         let allUsers = []; // Armazena todos os usuários para filtragem
         let allGroups = []; // Armazena todos os grupos
+        let currentPage = 1;
+        let pageSize = 20;
+        let currentUsersList = [];
 
         document.addEventListener('DOMContentLoaded', function() {
             // Carrega os grupos para o filtro
@@ -222,8 +246,10 @@
 
                     if (data.status === 'success') {
                         allUsers = data.data; // Armazena globalmente
-                        renderUsers(data.data);
-                        updateStats(data.data);
+                        const totalPages = Math.max(1, Math.ceil(allUsers.length / pageSize));
+                        currentPage = Math.min(currentPage, totalPages);
+                        renderUsersPaginated(allUsers);
+                        updateStats(allUsers);
                     } else {
                         throw new Error(data.message || 'Erro ao carregar usuários');
                     }
@@ -346,6 +372,71 @@
                 });
             }
 
+            function renderUsersPaginated(list) {
+                const total = list.length;
+                const start = (currentPage - 1) * pageSize;
+                const pageItems = list.slice(start, start + pageSize);
+                renderUsers(pageItems);
+                const pagWrap = document.getElementById('users-pagination');
+                const info = document.getElementById('users-pagination-info');
+                const indicator = document.getElementById('users-page-indicator');
+                const prevBtn = document.getElementById('users-prev');
+                const nextBtn = document.getElementById('users-next');
+                const sizeSel = document.getElementById('users-page-size');
+                const numbers = document.getElementById('users-page-numbers');
+                pagWrap.style.display = '';
+                const totalPages = Math.max(1, Math.ceil(total / pageSize));
+                info.textContent = `${total === 0 ? 0 : start + 1}-${Math.min(start + pageSize, total)} de ${total}`;
+                indicator.textContent = `Página ${currentPage} de ${totalPages}`;
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage >= totalPages;
+                prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderUsersPaginated(list); }};
+                nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderUsersPaginated(list); }};
+
+                // Guardar lista atual para reuso
+                currentUsersList = list;
+
+                // Tamanho da página
+                if (sizeSel && parseInt(sizeSel.value, 10) !== pageSize) {
+                    sizeSel.value = String(pageSize);
+                }
+                sizeSel.onchange = () => {
+                    pageSize = parseInt(sizeSel.value, 10) || 20;
+                    currentPage = 1;
+                    renderUsersPaginated(currentUsersList);
+                };
+
+                // Números de página
+                numbers.innerHTML = '';
+                const makeBtn = (p, label = null, disabled = false) => {
+                    const b = document.createElement('button');
+                    b.className = `px-2.5 py-1 rounded border text-sm ${p === currentPage ? 'bg-gray-100 font-semibold' : 'hover:bg-gray-50'}`;
+                    b.textContent = label || String(p);
+                    b.disabled = disabled || p === currentPage;
+                    b.onclick = () => { currentPage = p; renderUsersPaginated(list); };
+                    return b;
+                };
+                const addEllipsis = () => {
+                    const s = document.createElement('span');
+                    s.className = 'px-1 text-gray-500';
+                    s.textContent = '…';
+                    numbers.appendChild(s);
+                };
+                const totalToShow = 5; // janela central
+                const totalPagesInt = totalPages;
+                if (totalPagesInt <= totalToShow + 2) {
+                    for (let p = 1; p <= totalPagesInt; p++) numbers.appendChild(makeBtn(p));
+                } else {
+                    numbers.appendChild(makeBtn(1));
+                    let startP = Math.max(2, currentPage - 2);
+                    let endP = Math.min(totalPagesInt - 1, currentPage + 2);
+                    if (startP > 2) addEllipsis();
+                    for (let p = startP; p <= endP; p++) numbers.appendChild(makeBtn(p));
+                    if (endP < totalPagesInt - 1) addEllipsis();
+                    numbers.appendChild(makeBtn(totalPagesInt));
+                }
+            }
+
             // Função para atualizar estatísticas
             function updateStats(users) {
                 const totalUsers = users.length;
@@ -410,15 +501,16 @@
                     return matchesSearch && matchesAccessLevel && matchesGroup && matchesStatus;
                 });
 
-                renderUsers(filteredUsers);
+                currentPage = 1;
+                renderUsersPaginated(filteredUsers);
                 updateStats(filteredUsers);
             }
 
             // Event listeners para os filtros
-            document.getElementById('search-input').addEventListener('input', applyFilters);
-            document.getElementById('filter-access-level').addEventListener('change', applyFilters);
-            document.getElementById('filter-group').addEventListener('change', applyFilters);
-            document.getElementById('filter-status').addEventListener('change', applyFilters);
+            document.getElementById('search-input').addEventListener('input', () => { currentPage = 1; applyFilters(); });
+            document.getElementById('filter-access-level').addEventListener('change', () => { currentPage = 1; applyFilters(); });
+            document.getElementById('filter-group').addEventListener('change', () => { currentPage = 1; applyFilters(); });
+            document.getElementById('filter-status').addEventListener('change', () => { currentPage = 1; applyFilters(); });
 
             fetchUsers();
 
