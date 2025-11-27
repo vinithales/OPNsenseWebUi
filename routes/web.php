@@ -27,6 +27,10 @@ use App\Http\Controllers\Opnsense\AliasController;
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 
+// Redefinição de Senha
+Route::get('/password/reset', [\App\Http\Controllers\PasswordResetController::class, 'showForm'])->name('password.reset');
+Route::post('/password/reset', [\App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.reset.process');
+
 // ========================================
 // Rotas Protegidas (Com Autenticação)
 // ========================================

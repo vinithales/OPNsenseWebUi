@@ -81,6 +81,12 @@
                     </div>
                 @endif
             </form>
+
+            <div class="text-center mt-6">
+                <a href="{{ route('password.reset') }}" class="text-sm text-indigo-600 hover:text-indigo-500">
+                    Esqueceu sua senha? Clique aqui para redefinir
+                </a>
+            </div>
         </div>
     </div>
 

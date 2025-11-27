@@ -159,8 +159,18 @@
             <div class="credential-value password-highlight">{{ $user['password'] }}</div>
         </div>
 
+        <div class="credential-row">
+            <div class="credential-label">Código de Redefinição:</div>
+            <div class="credential-value" style="background-color: #e7f3ff; border-color: #0066cc;">{{ $user['reset_code'] }}</div>
+        </div>
+
         <div style="margin-top: 15px; padding: 10px; background-color: #e7f3ff; border-left: 4px solid #0066cc; font-size: 9pt;">
-            <strong>📌 Importante:</strong> Altere sua senha no primeiro acesso para garantir a segurança da sua conta.
+            <strong>📌 Importante:</strong>
+            <ul style="margin: 5px 0; padding-left: 15px;">
+                <li>Altere sua senha no primeiro acesso para garantir a segurança da sua conta</li>
+                <li><strong>Guarde o código de redefinição</strong> - você precisará dele se esquecer sua senha</li>
+                <li>Para redefinir sua senha, acesse a página de redefinição e informe seu RA + código</li>
+            </ul>
         </div>
     </div>
     @endforeach

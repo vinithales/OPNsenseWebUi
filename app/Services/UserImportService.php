@@ -95,9 +95,12 @@ class UserImportService
                         Log::warning("Grupo não encontrado para tipo '{$userType}'. Usuário será criado sem grupo.");
                     }
 
+                    // Gera código de redefinição
+                    $resetCode = $this->generateResetCode($ra, $fullname);
+
                     // Prepara dados para OPNsense API
-                    // Armazena RA e tipo no campo comment em formato estruturado
-                    $comment = "RA: {$ra} | Tipo: {$userType} | Importado: " . now()->format('Y-m-d H:i:s');
+                    // Armazena RA, tipo e código de redefinição no campo comment
+                    $comment = "RA: {$ra} | Tipo: {$userType} | Nome: {$fullname} | Código: {$resetCode} | Importado: " . now()->format('Y-m-d H:i:s');
 
                     $userData = [
                         'user' => [
@@ -121,6 +124,7 @@ class UserImportService
                             'ra' => $ra,
                             'fullname' => $fullname,
                             'user_type' => $userType,
+                            'reset_code' => $resetCode,
                         ];
 
                         // Armazena credenciais para PDF (LGPD: temporário, não persistido)
@@ -129,6 +133,7 @@ class UserImportService
                             'fullname' => $fullname,
                             'password' => $password, // Senha em texto simples apenas para PDF
                             'user_type' => $userType,
+                            'reset_code' => $resetCode,
                         ];
 
                         Log::info("Usuário importado com sucesso no OPNsense", [
@@ -197,6 +202,36 @@ class UserImportService
 
         // Embaralha a senha
         return str_shuffle($password);
+    }
+
+    /**
+     * Gera código de redefinição baseado no RA e nome completo
+     * 4 últimos dígitos do RA + 3 últimos caracteres do último nome
+     *
+     * @param string $ra
+     * @param string $fullname
+     * @return string
+     */
+    public function generateResetCode(string $ra, string $fullname): string
+    {
+        // 4 últimos dígitos do RA
+        $raDigits = preg_replace('/\D/', '', $ra); // Remove não-dígitos
+        $lastFourRA = substr($raDigits, -4);
+        $lastFourRA = str_pad($lastFourRA, 4, '0', STR_PAD_LEFT); // Preenche com zeros se necessário
+
+        // 3 últimos caracteres do último nome
+        $names = explode(' ', trim($fullname));
+        $lastName = end($names);
+        
+        // Se o último nome tem menos de 3 caracteres, usa o primeiro nome
+        if (strlen($lastName) < 3) {
+            $lastName = $names[0];
+        }
+        
+        $lastThreeLetters = strtolower(substr($lastName, -3));
+        $lastThreeLetters = str_pad($lastThreeLetters, 3, substr($names[0], -3), STR_PAD_LEFT);
+
+        return $lastFourRA . $lastThreeLetters;
     }
 
     /**
