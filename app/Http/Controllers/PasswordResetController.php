@@ -52,8 +52,8 @@ class PasswordResetController extends Controller
             $resetCode = $request->input('reset_code');
             $newPassword = $request->input('new_password');
 
-            // Busca usuário pelo RA (name no OPNsense)
-            $user = $this->userService->findUserByName($ra);
+            // Busca usuário pelo RA presente no campo comment
+            $user = $this->userService->findUserByRA($ra);
 
             if (!$user) {
                 return back()->withErrors(['ra' => 'RA não encontrado no sistema'])->withInput();
@@ -80,7 +80,7 @@ class PasswordResetController extends Controller
                     'user_uuid' => $user['uuid']
                 ]);
 
-                return redirect()->route('login')
+                return back()
                     ->with('success', 'Senha redefinida com sucesso! Você pode fazer login com a nova senha.');
             } else {
                 return back()->withErrors(['general' => 'Erro ao atualizar a senha. Tente novamente.']);
@@ -101,7 +101,7 @@ class PasswordResetController extends Controller
         try {
             // Extrai informações do comment
             $comment = $user['comment'] ?? '';
-            
+
             // Parse do comment para extrair RA e nome completo
             if (preg_match('/RA:\s*(\w+)/', $comment, $raMatch)) {
                 $ra = $raMatch[1];
@@ -109,10 +109,10 @@ class PasswordResetController extends Controller
                 $ra = $user['name']; // Fallback para o name do usuário
             }
 
-            // Busca o nome completo no fullname ou no comment
-            $fullname = $user['fullname'] ?? '';
-            
-            // Se não tiver fullname, tenta extrair do comment
+            // Busca o nome completo: primeiro em descr (campo novo), depois fullname (legado), depois comment
+            $fullname = $user['descr'] ?? $user['fullname'] ?? '';
+
+            // Se não tiver em descr/fullname, tenta extrair do comment
             if (empty($fullname) && preg_match('/Nome:\s*(.+?)\s*\|/', $comment, $nameMatch)) {
                 $fullname = trim($nameMatch[1]);
             }
@@ -120,6 +120,7 @@ class PasswordResetController extends Controller
             if (empty($fullname)) {
                 Log::warning("Nome completo não encontrado para validação do código", [
                     'user_uuid' => $user['uuid'],
+                    'user_data' => $user,
                     'ra' => $ra
                 ]);
                 return false;
@@ -127,7 +128,7 @@ class PasswordResetController extends Controller
 
             // Gera código esperado
             $expectedCode = $this->generateResetCode($ra, $fullname);
-            
+
             Log::debug("Validação do código de redefinição", [
                 'ra' => $ra,
                 'fullname' => $fullname,
@@ -158,12 +159,12 @@ class PasswordResetController extends Controller
         // 3 últimos caracteres do último nome
         $names = explode(' ', trim($fullname));
         $lastName = end($names);
-        
+
         // Se o último nome tem menos de 3 caracteres, usa o primeiro nome
         if (strlen($lastName) < 3) {
             $lastName = $names[0];
         }
-        
+
         $lastThreeLetters = strtolower(substr($lastName, -3));
         $lastThreeLetters = str_pad($lastThreeLetters, 3, substr($names[0], -3), STR_PAD_LEFT);
 

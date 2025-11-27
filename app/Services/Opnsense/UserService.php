@@ -247,4 +247,39 @@ class UserService extends BaseService
 
         return $users;
     }
+
+    /**
+     * Encontra usuário pelo RA contido no campo comment (formato: "RA: xxxx | ...")
+     */
+    public function findUserByRA(string $ra)
+    {
+        try {
+            $response = $this->client->post('/api/auth/user/search', [
+                'json' => [],
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    Log::debug('Effective request URL: ' . $stats->getEffectiveUri());
+                }
+            ]);
+
+            $body = (string) $response->getBody();
+            $data = json_decode($body, true);
+
+            if (isset($data['rows']) && is_array($data['rows'])) {
+                foreach ($data['rows'] as $user) {
+                    $comment = $user['comment'] ?? $user['descr'] ?? '';
+                    if (preg_match('/RA:\s*([^\|]+)/', $comment, $m)) {
+                        $foundRa = trim($m[1]);
+                        if ($foundRa === $ra) {
+                            return $user;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Error searching user by RA in OPNsense: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }
