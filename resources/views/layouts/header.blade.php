@@ -19,7 +19,7 @@
         @include('components.sidebar')
 
         <!-- Conteúdo principal -->
-        <main class="flex-1 overflow-y-auto p-8">
+        <main class="flex-1 overflow-y-auto p-8 bg-gray-100">
             @yield('main')
         </main>
     </div>

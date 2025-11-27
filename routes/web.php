@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SetupController;
 use App\Http\Controllers\Opnsense\Auth\UserController;
 use App\Http\Controllers\Opnsense\Auth\GroupController;
 use App\Http\Controllers\Opnsense\Auth\PermissionController;
@@ -20,22 +21,28 @@ use App\Http\Controllers\Opnsense\AliasController;
 */
 
 // ========================================
+// Rotas de Configuração Inicial (Sem Middleware)
+// ========================================
+Route::get('/setup', [SetupController::class, 'index'])->name('setup.index');
+Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
+
+// ========================================
 // Rotas Públicas (Sem Autenticação)
 // ========================================
 
 // Login
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login')->middleware('check.first.run');
+Route::post('/login', [LoginController::class, 'login'])->middleware('check.first.run');
 
 // Redefinição de Senha
-Route::get('/password/reset', [\App\Http\Controllers\PasswordResetController::class, 'showForm'])->name('password.reset');
-Route::post('/password/reset', [\App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.reset.process');
+Route::get('/password/reset', [\App\Http\Controllers\PasswordResetController::class, 'showForm'])->name('password.reset')->middleware('check.first.run');
+Route::post('/password/reset', [\App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.reset.process')->middleware('check.first.run');
 
 // ========================================
 // Rotas Protegidas (Com Autenticação)
 // ========================================
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'check.first.run'])->group(function () {
 
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -44,6 +51,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.alternative');
     Route::get('/api/dashboard/stats', [DashboardController::class, 'getStats'])->name('dashboard.stats');
+
+    // ========================================
+    // Settings - Configurações do Sistema
+    // ========================================
+    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
 
     // ========================================
     // Users - Gerenciamento de Usuários
