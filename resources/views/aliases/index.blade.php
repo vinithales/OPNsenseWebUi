@@ -40,6 +40,11 @@
             </div>
             <div class="flex items-center space-x-4">
                 <span class="text-sm text-gray-600" id="aliasStats">0 aliases</span>
+                <select id="aliases-bulk-action" class="pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <option value="">Ação em massa</option>
+                    <option value="delete">Excluir selecionados</option>
+                </select>
+                <button id="aliases-bulk-apply" class="px-3 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">Aplicar</button>
             </div>
         </div>
 
@@ -47,6 +52,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><input type="checkbox" id="aliases-select-all"></th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conteúdo</th>
@@ -66,8 +72,8 @@
                 <div class="flex items-center gap-2">
                     <span class="text-sm text-gray-600">Por página:</span>
                     <select id="aliases-page-size" class="border rounded px-2 py-1 text-sm">
-                        <option value="10">10</option>
-                        <option value="20" selected>20</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
@@ -146,7 +152,7 @@
 let allAliases = [];
 let isLoading = false;
 let currentPage = 1;
-let pageSize = 20;
+let pageSize = 10;
 let currentAliasesList = [];
 
 // Inicialização
@@ -161,6 +167,33 @@ function setupEventListeners() {
         e.preventDefault();
         saveAlias();
     });
+
+    // Aplicação em massa
+    const bulkBtn = document.getElementById('aliases-bulk-apply');
+    if (bulkBtn) {
+        bulkBtn.addEventListener('click', async () => {
+            const action = document.getElementById('aliases-bulk-action').value;
+            const selected = Array.from(document.querySelectorAll('.aliases-select:checked')).map(cb => cb.value);
+            if (!action || selected.length === 0) {
+                alert('Selecione uma ação e ao menos um alias.');
+                return;
+            }
+            if (action === 'delete') {
+                if (!confirm(`Excluir ${selected.length} alias(es)?`)) return;
+                for (const id of selected) {
+                    try {
+                        const resp = await fetch(`/api/aliases/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        });
+                        await resp.json();
+                    } catch (e) { console.error('Erro ao excluir alias', id, e); }
+                }
+                await applyAliasChanges();
+                await loadAliases();
+            }
+        });
+    }
 }
 
 // Carregar aliases
@@ -173,7 +206,7 @@ async function loadAliases() {
     try {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center">
+                <td colspan="6" class="px-6 py-8 text-center">
                     <div class="flex justify-center items-center">
                         <svg class="animate-spin h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -201,7 +234,7 @@ async function loadAliases() {
         console.error('Erro:', error);
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-4 text-center text-red-500">
+                <td colspan="6" class="px-6 py-4 text-center text-red-500">
                     <div class="flex items-center justify-center">
                         <svg class="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -223,7 +256,7 @@ function renderAliases(aliases) {
     if (!aliases || aliases.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                     <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path fill-rule="evenodd" d="M11.47 3.84a.75.75 0 01.78 0l7.5 4.5a.75.75 0 010 1.32l-7.5 4.5a.75.75 0 01-.78 0l-7.5-4.5a.75.75 0 010-1.32l7.5-4.5z" clip-rule="evenodd" />
                     </svg>
@@ -249,6 +282,9 @@ function renderAliases(aliases) {
 
         return `
             <tr class="transition-colors hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="checkbox" class="aliases-select" value="${uuid}">
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${name}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">${type}</span>
@@ -293,7 +329,7 @@ function renderAliasesPaginated(list) {
 
     currentAliasesList = list;
     if (sizeSel && parseInt(sizeSel.value, 10) !== pageSize) sizeSel.value = String(pageSize);
-    sizeSel.onchange = () => { pageSize = parseInt(sizeSel.value, 10) || 20; currentPage = 1; renderAliasesPaginated(currentAliasesList); };
+    sizeSel.onchange = () => { pageSize = parseInt(sizeSel.value, 10) || 10; currentPage = 1; renderAliasesPaginated(currentAliasesList); };
 
     numbers.innerHTML = '';
     const makeBtn = (p, label = null, disabled = false) => {

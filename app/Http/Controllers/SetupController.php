@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Models\User;
 
 class SetupController extends Controller
 {
@@ -58,7 +59,42 @@ class SetupController extends Controller
         }
 
         try {
-            // Atualiza arquivo .env
+            // Ajusta config runtime da porta do banco (sem depender de novo bootstrap)
+            if ($request->db_port) {
+                config(['database.connections.mysql.port' => $request->db_port]);
+            }
+
+            // Executa migrations antes de alterar estado de primeira execução
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Exception $e) {
+                Log::warning('Migrations já executadas ou erro ao executar: ' . $e->getMessage());
+            }
+
+            // Criação do usuário admin em transação
+            DB::beginTransaction();
+            try {
+                // Evita duplicidade se rodar novamente por algum motivo
+                $existing = User::where('email', $request->admin_email)->first();
+                if (!$existing) {
+                    User::create([
+                        'name' => $request->admin_name,
+                        'email' => $request->admin_email,
+                        'password' => Hash::make($request->admin_password),
+                        'user_type' => User::TYPE_ADMIN,
+                        'status' => User::STATUS_ATIVO,
+                    ]);
+                }
+                DB::commit();
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                Log::error('Falha ao criar usuário admin no setup: ' . $e->getMessage());
+                return redirect()->back()
+                    ->with('error', 'Erro ao criar usuário administrador: ' . $e->getMessage())
+                    ->withInput();
+            }
+
+            // Atualiza arquivo .env somente após sucesso das operações críticas
             $this->updateEnvFile([
                 'APP_NAME' => $request->app_name ?? 'OPNsense Web UI',
                 'APP_URL' => $request->app_url ?? config('app.url'),
@@ -69,23 +105,12 @@ class SetupController extends Controller
                 'APP_FIRST_RUN' => 'false',
             ]);
 
-            // Executa migrations
-            try {
-                Artisan::call('migrate', ['--force' => true]);
-            } catch (\Exception $e) {
-                Log::warning('Migrations já executadas ou erro ao executar: ' . $e->getMessage());
-            }
+            // Ajusta runtime para este request (artisan serve reutiliza processo)
+            putenv('APP_FIRST_RUN=false');
+            $_ENV['APP_FIRST_RUN'] = 'false';
+            $_SERVER['APP_FIRST_RUN'] = 'false';
 
-            // Cria usuário administrador no banco local
-            DB::table('users')->insert([
-                'name' => $request->admin_name,
-                'email' => $request->admin_email,
-                'password' => Hash::make($request->admin_password),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Limpa cache de configuração
+            // Limpa caches para refletir novo estado
             Artisan::call('config:clear');
             Artisan::call('cache:clear');
 

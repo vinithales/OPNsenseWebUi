@@ -123,12 +123,6 @@
                     </svg>
                     Redefinir Senha
                 </button>
-
-                <div class="text-center">
-                    <a href="{{ route('login') }}" class="text-sm text-indigo-600 hover:text-indigo-500">
-                        ← Voltar ao Login
-                    </a>
-                </div>
             </form>
 
             <div class="mt-6 bg-blue-50 border border-blue-200 rounded-md p-4">

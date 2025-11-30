@@ -145,6 +145,15 @@
                         </div>
                         <input type="text" placeholder="Buscar usuários..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md sm:text-sm" id="search-input">
                     </div>
+
+                    <!-- Ações em massa -->
+                    <div class="flex items-center gap-2">
+                        <select id="users-bulk-action" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="">Ação em massa</option>
+                            <option value="delete">Excluir selecionados</option>
+                        </select>
+                        <button id="users-bulk-apply" class="px-3 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">Aplicar</button>
+                    </div>
                 </div>
             </div>
 
@@ -152,6 +161,9 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="users-select-all">
+                            </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nível de Acesso</th>
@@ -162,7 +174,7 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="users-table-body">
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center">
+                            <td colspan="7" class="px-6 py-4 text-center">
                                 <div class="flex justify-center items-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -182,8 +194,8 @@
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-gray-600">Por página:</span>
                         <select id="users-page-size" class="border rounded px-2 py-1 text-sm">
-                            <option value="10">10</option>
-                            <option value="20" selected>20</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
@@ -203,7 +215,7 @@
         let allUsers = []; // Armazena todos os usuários para filtragem
         let allGroups = []; // Armazena todos os grupos
         let currentPage = 1;
-        let pageSize = 20;
+        let pageSize = 10;
         let currentUsersList = [];
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -273,7 +285,7 @@
                 if (users.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center">
+                            <td colspan="7" class="px-6 py-4 text-center">
                                 Nenhum usuário encontrado
                             </td>
                         </tr>
@@ -317,6 +329,9 @@
                         user.uuid);
 
                     row.innerHTML = `
+                        <td class="px-6 py-4">
+                            <input type="checkbox" class="users-select" value="${user.uuid}">
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-800 font-medium">${initials}</div>
@@ -370,6 +385,14 @@
 
                     tbody.appendChild(row);
                 });
+
+                // Ligação do checkbox geral
+                const selectAll = document.getElementById('users-select-all');
+                if (selectAll) {
+                    selectAll.onchange = (e) => {
+                        document.querySelectorAll('.users-select').forEach(cb => cb.checked = e.target.checked);
+                    };
+                }
             }
 
             function renderUsersPaginated(list) {
@@ -401,7 +424,7 @@
                     sizeSel.value = String(pageSize);
                 }
                 sizeSel.onchange = () => {
-                    pageSize = parseInt(sizeSel.value, 10) || 20;
+                    pageSize = parseInt(sizeSel.value, 10) || 10;
                     currentPage = 1;
                     renderUsersPaginated(currentUsersList);
                 };
@@ -511,6 +534,33 @@
             document.getElementById('filter-access-level').addEventListener('change', () => { currentPage = 1; applyFilters(); });
             document.getElementById('filter-group').addEventListener('change', () => { currentPage = 1; applyFilters(); });
             document.getElementById('filter-status').addEventListener('change', () => { currentPage = 1; applyFilters(); });
+
+            // Aplicar ação em massa
+            document.getElementById('users-bulk-apply').addEventListener('click', async () => {
+                const action = document.getElementById('users-bulk-action').value;
+                const selected = Array.from(document.querySelectorAll('.users-select:checked')).map(cb => cb.value);
+                if (!action || selected.length === 0) {
+                    alert('Selecione uma ação e ao menos um usuário.');
+                    return;
+                }
+                if (action === 'delete') {
+                    if (!confirm(`Excluir ${selected.length} usuário(s)?`)) return;
+                    // Execução em série simples
+                    for (const id of selected) {
+                        try {
+                            const resp = await fetch(`/api/users/${id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json'
+                                }
+                            });
+                            await resp.json();
+                        } catch (e) { console.error('Erro ao excluir', id, e); }
+                    }
+                    await fetchUsers();
+                }
+            });
 
             fetchUsers();
 

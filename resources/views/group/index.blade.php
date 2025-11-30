@@ -65,7 +65,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <input type="text" placeholder="Buscar grupo..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md sm:text-sm" id="search-input">
+                    <div class="flex items-center gap-2">
+                        <input type="text" placeholder="Buscar grupo..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md sm:text-sm" id="search-input">
+                        <select id="groups-bulk-action" class="pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="">Ação em massa</option>
+                            <option value="delete">Excluir selecionados</option>
+                        </select>
+                        <button id="groups-bulk-apply" class="px-3 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">Aplicar</button>
+                    </div>
                 </div>
             </div>
 
@@ -73,6 +80,9 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="groups-select-all">
+                            </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome do Grupo</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Nº de Membros</th>
@@ -91,8 +101,8 @@
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-gray-600">Por página:</span>
                         <select id="groups-page-size" class="border rounded px-2 py-1 text-sm">
-                            <option value="10">10</option>
-                            <option value="20" selected>20</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
@@ -144,7 +154,7 @@
     <script>
         let allGroups = []; // Armazena todos os grupos carregados
         let currentPage = 1;
-        let pageSize = 20;
+        let pageSize = 10;
         let currentGroupsList = [];
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -182,7 +192,7 @@
                 if (groups.length === 0) {
                     tbody.innerHTML = `
                     <tr>
-                        <td colspan="4" class="px-6 py-4 text-center">
+                        <td colspan="5" class="px-6 py-4 text-center">
                             Nenhum grupo encontrado
                         </td>
                     </tr>
@@ -197,6 +207,9 @@
                     editUrl = editUrl.replace('__UUID__', group.uuid);
 
                     row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="groups-select" value="${group.uuid}">
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">${group.name || 'Sem nome'}</div>
                     </td>
@@ -232,6 +245,14 @@
 
                     tbody.appendChild(row);
                 });
+
+                // Selecionar todos
+                const selectAll = document.getElementById('groups-select-all');
+                if (selectAll) {
+                    selectAll.onchange = (e) => {
+                        document.querySelectorAll('.groups-select').forEach(cb => cb.checked = e.target.checked);
+                    };
+                }
             }
 
             function renderGroupsPaginated(list) {
@@ -257,7 +278,7 @@
 
                 currentGroupsList = list;
                 if (sizeSel && parseInt(sizeSel.value, 10) !== pageSize) sizeSel.value = String(pageSize);
-                sizeSel.onchange = () => { pageSize = parseInt(sizeSel.value, 10) || 20; currentPage = 1; renderGroupsPaginated(currentGroupsList); };
+                sizeSel.onchange = () => { pageSize = parseInt(sizeSel.value, 10) || 10; currentPage = 1; renderGroupsPaginated(currentGroupsList); };
 
                 numbers.innerHTML = '';
                 const makeBtn = (p, label = null, disabled = false) => {
@@ -290,6 +311,46 @@
                 const filtered = allGroups.filter(g => (g.name || '').toLowerCase().includes(searchTerm) || (g.description || '').toLowerCase().includes(searchTerm));
                 currentPage = 1;
                 renderGroupsPaginated(filtered);
+            });
+
+            // Aplicar ação em massa
+            document.getElementById('groups-bulk-apply').addEventListener('click', async () => {
+                const action = document.getElementById('groups-bulk-action').value;
+                const selected = Array.from(document.querySelectorAll('.groups-select:checked')).map(cb => cb.value);
+                if (!action || selected.length === 0) {
+                    alert('Selecione uma ação e ao menos um grupo.');
+                    return;
+                }
+                if (action === 'delete') {
+                    if (!confirm(`Excluir ${selected.length} grupo(s)?`)) return;
+                    for (const id of selected) {
+                        try {
+                            const resp = await fetch(`/api/groups/${id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json'
+                                }
+                            });
+                            await resp.json();
+                        } catch (e) { console.error('Erro ao excluir', id, e); }
+                    }
+                    // Recarregar
+                    // Reutiliza a chamada de listagem para refletir mudanças
+                    // Força reset filtros
+                    currentPage = 1;
+                    // Recarrega do servidor
+                    (async () => {
+                        try {
+                            const response = await fetch('api/groups');
+                            const data = await response.json();
+                            if (data.status === 'success') {
+                                allGroups = data.data;
+                                renderGroupsPaginated(allGroups);
+                            }
+                        } catch (_) {}
+                    })();
+                }
             });
 
             fetchGroups();
