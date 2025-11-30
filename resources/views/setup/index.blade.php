@@ -209,7 +209,15 @@
                 <!-- Footer -->
                 <div class="bg-gray-50 px-6 py-4 border border-gray-200 rounded-md flex justify-between items-center">
                     <p class="text-sm text-gray-500">* Campos obrigatórios</p>
-                    <button type="submit" class="inline-flex items-center px-6 py-2.5 bg-green-600 border border-transparent rounded-md font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+
+                    <!-- Botão Prosseguir (visível nas abas admin e opnsense) -->
+                    <button type="button" x-show="activeTab !== 'advanced'" @click="activeTab = activeTab === 'admin' ? 'opnsense' : 'advanced'" class="inline-flex items-center px-6 py-2.5 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        Prosseguir
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+
+                    <!-- Botão Concluir (visível apenas na aba advanced) -->
+                    <button type="submit" x-show="activeTab === 'advanced'" class="inline-flex items-center px-6 py-2.5 bg-green-600 border border-transparent rounded-md font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                         <i class="fas fa-check mr-2"></i>
                         Concluir Configuração
                     </button>

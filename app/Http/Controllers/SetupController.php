@@ -15,7 +15,8 @@ class SetupController extends Controller
     public function index()
     {
         // Verifica se já foi configurado
-        if (env('APP_FIRST_RUN', 'true') === 'false') {
+        $firstRun = env('APP_FIRST_RUN', 'true');
+        if ($firstRun === 'false' || $firstRun === false) {
             return redirect()->route('login')->with('info', 'Sistema já configurado.');
         }
 
