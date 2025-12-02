@@ -25,6 +25,8 @@ use App\Http\Controllers\Opnsense\AliasController;
 // ========================================
 Route::get('/setup', [SetupController::class, 'index'])->name('setup.index');
 Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
+// Redefinir sistema (sem middleware) - volta ao estado de primeira execução
+Route::post('/system/reset', [SetupController::class, 'resetSystem'])->name('system.reset');
 
 // ========================================
 // Rotas Públicas (Sem Autenticação)

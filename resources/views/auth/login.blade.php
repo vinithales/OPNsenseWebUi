@@ -82,10 +82,19 @@
                 @endif
             </form>
 
-            <div class="text-center mt-6">
-                <a href="{{ route('password.reset') }}" class="text-sm text-indigo-600 hover:text-indigo-500">
-                    Esqueceu sua senha? Clique aqui para redefinir
-                </a>
+
+
+            <div class="mt-4 pt-4 border-t text-center">
+                <form method="POST" action="{{ route('system.reset') }}" onsubmit="return confirm('Isto vai redefinir o sistema para o estado inicial. Você precisará informar novamente as credenciais do OPNsense e recriar o usuário administrador. Deseja continuar?');">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-red-300 text-red-700 bg-white hover:bg-red-50 rounded-md text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Perdi o acesso — Redefinir sistema
+                    </button>
+                </form>
+                <p class="mt-2 text-xs text-gray-500">A redefinição exige informar as credenciais do OPNsense na próxima etapa.</p>
             </div>
         </div>
     </div>

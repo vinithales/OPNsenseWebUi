@@ -159,4 +159,44 @@ class SetupController extends Controller
 
         file_put_contents($envFile, $envContent);
     }
+
+    /**
+     * Marca o sistema como primeira execução novamente
+     * para permitir novo cadastro do administrador e credenciais do OPNsense.
+     */
+    public function resetSystem(Request $request)
+    {
+        try {
+            // Remove todos os usuários e dados relacionados
+            try {
+                DB::beginTransaction();
+                // Desabilita FKs para truncates seguros (MySQL)
+                try { DB::statement('SET FOREIGN_KEY_CHECKS=0'); } catch (\Throwable $e) {}
+                try { DB::table('password_reset_tokens')->truncate(); } catch (\Throwable $e) { Log::warning('Falha ao truncar password_reset_tokens: ' . $e->getMessage()); }
+                try { DB::table('personal_access_tokens')->truncate(); } catch (\Throwable $e) { Log::warning('Falha ao truncar personal_access_tokens: ' . $e->getMessage()); }
+                try { DB::table('users')->truncate(); } catch (\Throwable $e) { Log::warning('Falha ao truncar users: ' . $e->getMessage()); }
+                try { DB::statement('SET FOREIGN_KEY_CHECKS=1'); } catch (\Throwable $e) {}
+                DB::commit();
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                Log::error('Erro ao remover usuários durante reset: ' . $e->getMessage());
+            }
+
+            // Atualiza .env para primeira execução
+            $this->updateEnvFile([
+                'APP_FIRST_RUN' => 'true',
+            ]);
+
+            // Ajusta runtime para refletir imediatamente
+            putenv('APP_FIRST_RUN=true');
+            $_ENV['APP_FIRST_RUN'] = 'true';
+            $_SERVER['APP_FIRST_RUN'] = 'true';
+
+            return redirect()->route('setup.index')
+                ->with('info', 'Sistema redefinido. Todos os usuários foram removidos. Conclua a configuração inicial novamente.');
+        } catch (\Throwable $e) {
+            Log::error('Falha ao redefinir sistema: ' . $e->getMessage());
+            return back()->with('error', 'Falha ao redefinir sistema. Tente novamente.');
+        }
+    }
 }
