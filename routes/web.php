@@ -133,6 +133,7 @@ Route::middleware(['auth', 'check.first.run'])->group(function () {
 
     // Views
     Route::get('/aliases', [AliasController::class, 'index'])->name('aliases.index');
+    Route::get('/aliases/{uuid}/edit', [AliasController::class, 'edit'])->name('aliases.edit');
 
     // API - Aliases (CRUD)
     Route::get('api/aliases', [AliasController::class, 'list'])->name('api.aliases.list');

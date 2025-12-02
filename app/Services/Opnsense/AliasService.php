@@ -171,15 +171,12 @@ class AliasService extends BaseService
      */
     public function getAlias(string $uuid): ?array
     {
+
         try {
             Log::info("Obtendo alias específico", ['uuid' => $uuid]);
 
-            $response = $this->client->get("/api/firewall/alias/get_item/{$uuid}", [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json'
-                ]
-            ]);
+            // GET puro, sem headers extras
+            $response = $this->client->get("/api/firewall/alias/get_item/{$uuid}");
 
             $statusCode = $response->getStatusCode();
             $body = $response->getBody()->getContents();

@@ -7,8 +7,8 @@
         <div class="flex items-center">
             <div class="flex-shrink-0">
                 <div class="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 text-green-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                        <path fill-rule="evenodd" d="M11.47 3.84a.75.75 0 01.78 0l7.5 4.5a.75.75 0 010 1.32l-7.5 4.5a.75.75 0 01-.78 0l-7.5-4.5a.75.75 0 010-1.32l7.5-4.5zM3.53 12.34a.75.75 0 011.03-.27l6.91 4.14v3.69a.75.75 0 01-1.13.65l-7.5-4.5a.75.75 0 01-.31-.61v-2.1zm16.94 0a.75.75 0 00-1.03-.27l-6.91 4.14v3.69a.75.75 0 001.13.65l7.5-4.5a.75.75 0 00.31-.61v-2.1z" clip-rule="evenodd" />
+                    <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                     </svg>
                 </div>
             </div>
@@ -33,8 +33,8 @@
     <div class="bg-white rounded-lg shadow-sm">
         <div class="p-6 flex items-center justify-between border-b">
             <div class="flex items-center space-x-4">
-                <svg class="h-6 w-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path fill-rule="evenodd" d="M11.47 3.84a.75.75 0 01.78 0l7.5 4.5a.75.75 0 010 1.32l-7.5 4.5a.75.75 0 01-.78 0l-7.5-4.5a.75.75 0 010-1.32l7.5-4.5z" clip-rule="evenodd" />
+                <svg class="h-6 w-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                 </svg>
                 <h2 class="text-xl font-semibold text-gray-900">Aliases</h2>
             </div>
@@ -159,6 +159,13 @@ let currentAliasesList = [];
 document.addEventListener('DOMContentLoaded', function() {
     loadAliases();
     setupEventListeners();
+
+    // Check for success message from edit page
+    const successMessage = sessionStorage.getItem('aliasEditSuccess');
+    if (successMessage) {
+        showNotification('success', successMessage);
+        sessionStorage.removeItem('aliasEditSuccess');
+    }
 });
 
 // Configurar event listeners
@@ -271,35 +278,41 @@ function renderAliases(aliases) {
     }
 
     tbody.innerHTML = aliases.map((alias, index) => {
-        const uuid = alias.uuid || index;
-        const name = alias.name || alias['alias']?.name || '-';
-        const type = alias.type || alias['alias']?.type || '-';
-        const content = alias.content || alias['alias']?.content || '-';
-        const description = alias.description || alias.descr || alias['alias']?.description || '';
+            const uuid = alias.uuid;
+            const name = alias.name || alias['alias']?.name || '-';
+            const type = alias.type || alias['alias']?.type || '-';
+            const content = alias.content || alias['alias']?.content || '-';
+            const description = alias.description || alias.descr || alias['alias']?.description || '';
 
-        // Truncar conteúdo se for muito longo
-        const displayContent = content.length > 50 ? content.substring(0, 50) + '...' : content;
+            // Truncar conteúdo se for muito longo
+            const displayContent = content.length > 50 ? content.substring(0, 50) + '...' : content;
 
-        return `
-            <tr class="transition-colors hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <input type="checkbox" class="aliases-select" value="${uuid}">
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${name}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">${type}</span>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-900 font-mono" title="${content}">${displayContent}</td>
-                <td class="px-6 py-4 text-sm text-gray-500">${description || '-'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                    <button onclick="deleteAlias('${uuid}')" class="text-red-600 hover:text-red-800" title="Excluir">
-                        <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
-                </td>
-            </tr>
-        `;
+            // Só exibe botão editar se houver uuid válido
+            return `
+                <tr class="transition-colors hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="aliases-select" value="${uuid || ''}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">${type}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900 font-mono" title="${content}">${displayContent}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${description || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm flex gap-2 justify-center">
+                        ${uuid ? `<a href="/aliases/${uuid}/edit" class="text-gray-400 hover:text-indigo-600" title="Editar">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </a>` : ''}
+                        ${uuid ? `<button onclick="deleteAlias('${uuid}')" class="text-gray-400 hover:text-red-600" title="Excluir">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>` : ''}
+                    </td>
+                </tr>
+            `;
     }).join('');
 }
 
@@ -365,16 +378,42 @@ function updateStats() {
     }
 }
 
-// Abrir modal de alias (criar)
-function openAliasModal() {
+// Abrir modal de alias (criar ou editar)
+let editingAliasUuid = null;
+function openAliasModal(editData = null) {
     const modal = document.getElementById('aliasModal');
     const title = document.getElementById('modalTitle');
-
-    title.textContent = 'Novo Alias';
     document.getElementById('aliasForm').reset();
     document.getElementById('aliasEnabled').checked = true;
+    editingAliasUuid = null;
 
+    if (editData) {
+        title.textContent = 'Editar Alias';
+        document.getElementById('aliasName').value = editData.name || '';
+        document.getElementById('aliasType').value = editData.type || '';
+        document.getElementById('aliasContent').value = editData.content || '';
+        document.getElementById('aliasDescription').value = editData.description || editData.descr || '';
+        document.getElementById('aliasEnabled').checked = editData.enabled == 1 || editData.enabled === true || editData.enabled === '1';
+        editingAliasUuid = editData.uuid;
+    } else {
+        title.textContent = 'Novo Alias';
+    }
     modal.classList.remove('hidden');
+}
+
+// Função para buscar dados e abrir modal de edição
+async function editAlias(uuid) {
+    try {
+        const resp = await fetch(`/api/aliases/${uuid}`);
+        const data = await resp.json();
+        if (data.status === 'success') {
+            openAliasModal({ ...data.data, uuid });
+        } else {
+            showNotification('error', data.message || 'Erro ao buscar alias');
+        }
+    } catch (e) {
+        showNotification('error', 'Erro ao buscar alias');
+    }
 }
 
 // Fechar modal
@@ -383,7 +422,7 @@ function closeAliasModal() {
     document.getElementById('aliasForm').reset();
 }
 
-// Salvar alias (criar)
+// Salvar alias (criar ou editar)
 async function saveAlias() {
     const aliasData = {
         name: document.getElementById('aliasName').value,
@@ -394,24 +433,38 @@ async function saveAlias() {
     };
 
     try {
-        const response = await fetch('/api/aliases', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify(aliasData)
-        });
+        let response;
+        if (editingAliasUuid) {
+            // Editar
+            response = await fetch(`/api/aliases/${editingAliasUuid}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(aliasData)
+            });
+        } else {
+            // Criar
+            response = await fetch('/api/aliases', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(aliasData)
+            });
+        }
 
         const data = await response.json();
 
         if (data.status === 'success') {
             closeAliasModal();
-            showNotification('success', data.message || 'Alias criado com sucesso!');
+            showNotification('success', data.message || (editingAliasUuid ? 'Alias atualizado com sucesso!' : 'Alias criado com sucesso!'));
             await applyAliasChanges();
             await loadAliases();
         } else {
-            throw new Error(data.message || 'Erro ao criar alias');
+            throw new Error(data.message || (editingAliasUuid ? 'Erro ao atualizar alias' : 'Erro ao criar alias'));
         }
     } catch (error) {
         console.error('Erro:', error);

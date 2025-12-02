@@ -306,24 +306,24 @@ class FacultyUserImportService
         $sheet->getColumnDimension('F')->setWidth(15);
 
         // Exemplos
-        $sheet->setCellValue('A2', '44707');
-        $sheet->setCellValue('B2', 'Helio Massamitsu Oshima');
-        $sheet->setCellValue('C2', 'Fatec Administrativo');
-        $sheet->setCellValue('D2', 'ad44707');
+        $sheet->setCellValue('A2', '12345');
+        $sheet->setCellValue('B2', 'Maria Santos Silva');
+        $sheet->setCellValue('C2', 'administrativo');
+        $sheet->setCellValue('D2', 'ad12345');
         $sheet->setCellValue('E2', 'fatec');
         $sheet->setCellValue('F2', 'S');
 
-        $sheet->setCellValue('A3', '52750');
-        $sheet->setCellValue('B3', 'Sueli Satiko Yamashita Ikeda');
-        $sheet->setCellValue('C3', 'Fatec Administrativo');
-        $sheet->setCellValue('D3', 'ad52750');
+        $sheet->setCellValue('A3', '67890');
+        $sheet->setCellValue('B3', 'João Pedro Costa');
+        $sheet->setCellValue('C3', 'administrativo');
+        $sheet->setCellValue('D3', 'ad67890');
         $sheet->setCellValue('E3', 'fatec');
         $sheet->setCellValue('F3', 'S');
 
-        $sheet->setCellValue('A4', '############');
-        $sheet->setCellValue('B4', 'LUCAS CASSIANO GARCIA DE OLIVEIRA');
-        $sheet->setCellValue('C4', 'Fatec Discentes ADS Manhã');
-        $sheet->setCellValue('D4', 'di1570482011102');
+        $sheet->setCellValue('A4', '54321');
+        $sheet->setCellValue('B4', 'Ana Clara Souza');
+        $sheet->setCellValue('C4', 'ads-manha');
+        $sheet->setCellValue('D4', 'di54321');
         $sheet->setCellValue('E4', 'fatec');
         $sheet->setCellValue('F4', 'S');
 
