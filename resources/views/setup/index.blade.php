@@ -44,7 +44,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('setup.store') }}" method="POST" class="bg-white p-8 rounded-lg shadow-xl space-y-6" x-data="{ activeTab: 'admin' }">
+            <form action="{{ route('setup.store') }}" method="POST" class="bg-white p-8 rounded-lg shadow-xl space-y-6" x-data="{ activeTab: '{{ session('setup_active_tab', 'admin') }}' }">
                 @csrf
 
                 <!-- Título do Card -->

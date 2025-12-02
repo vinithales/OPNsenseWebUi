@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class SetupController extends Controller
 {
@@ -60,6 +62,19 @@ class SetupController extends Controller
         }
 
         try {
+            // 1) Testa as credenciais do OPNsense antes de persistir
+            $test = $this->testOpnsenseCredentials(
+                $request->opnsense_url,
+                $request->opnsense_api_key,
+                $request->opnsense_api_secret
+            );
+            if ($test !== true) {
+                return redirect()->back()
+                    ->with('error', $test)
+                    ->with('setup_active_tab', 'opnsense')
+                    ->withInput();
+            }
+
             // Ajusta config runtime da porta do banco (sem depender de novo bootstrap)
             if ($request->db_port) {
                 config(['database.connections.mysql.port' => $request->db_port]);
@@ -158,6 +173,62 @@ class SetupController extends Controller
         }
 
         file_put_contents($envFile, $envContent);
+    }
+
+    /**
+     * Valida as credenciais informadas do OPNsense realizando uma chamada simples autenticada.
+     * Retorna true em caso de sucesso, ou string com mensagem de erro em caso de falha.
+     */
+    private function testOpnsenseCredentials(string $baseUrl, string $apiKey, string $apiSecret)
+    {
+        try {
+            // Normaliza base URL
+            $baseUrl = rtrim($baseUrl, '/');
+
+            $client = new Client([
+                'base_uri' => $baseUrl,
+                'auth' => [$apiKey, $apiSecret],
+                'verify' => false,
+                'headers' => [ 'Accept' => 'application/json' ],
+                'http_errors' => false,
+                'timeout' => 10,
+                'connect_timeout' => 5,
+            ]);
+
+            // Endpoint simples e seguro para testar auth: listar usuários
+            $resp = $client->post('/api/auth/user/search', [ 'json' => [] ]);
+            $code = $resp->getStatusCode();
+            $body = (string) $resp->getBody();
+
+            if ($code !== 200) {
+                if (in_array($code, [401, 403], true)) {
+                    return 'Credenciais inválidas do OPNsense (API Key/Secret). Verifique se as chaves estão corretas e ativas (System → Access → Users → API Keys).';
+                }
+                if ($code === 404) {
+                    return 'URL do OPNsense incorreta. Confirme o endereço (http/https) e se a API está acessível.';
+                }
+                if ($code >= 500) {
+                    return 'Erro no OPNsense (HTTP 5xx). Tente novamente mais tarde ou verifique o appliance.';
+                }
+                return 'Falha ao conectar ao OPNsense (HTTP ' . $code . '). Verifique a URL e as credenciais.';
+            }
+
+            // Opcional: verificar estrutura
+            $data = json_decode($body, true);
+            if (!is_array($data)) {
+                return 'Resposta inesperada da API do OPNsense. Verifique a URL e tente novamente.';
+            }
+
+            return true;
+        } catch (RequestException $e) {
+            $msg = strtolower($e->getMessage());
+            if (str_contains($msg, 'timed out')) {
+                return 'Tempo de conexão esgotado. Verifique a rede/URL do OPNsense.';
+            }
+            return 'Não foi possível conectar ao OPNsense. Verifique a rede e a URL informada.';
+        } catch (\Throwable $e) {
+            return 'Erro inesperado ao validar as credenciais do OPNsense.';
+        }
     }
 
     /**
