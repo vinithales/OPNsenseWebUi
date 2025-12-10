@@ -132,6 +132,16 @@
                                 <input type="file" name="excel_file" accept=".xlsx,.xls" required class="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-green-500 focus:border-green-500 p-2">
                             </div>
 
+                            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-md">
+                                <label class="flex items-start cursor-pointer">
+                                    <input type="checkbox" name="update_existing_users" value="1" class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                    <span class="ml-2">
+                                        <span class="block text-sm font-medium text-gray-900">Atualizar usuários existentes</span>
+                                        <span class="block text-xs text-yellow-800 mt-1">⚠️ <strong>Atenção:</strong> Se marcado, usuários que já existirem no sistema terão suas informações <strong>atualizadas</strong> com os dados da planilha (nome, grupo, etc). A senha será preservada.</span>
+                                    </span>
+                                </label>
+                            </div>
+
                             <div class="flex gap-3">
                                 <a href="{{ route('users.import.faculty.template') }}" class="inline-flex items-center px-4 py-2 bg-white border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 hover:bg-green-50">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,6 +259,16 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Excel</label>
                                     <input type="file" name="excel_file" accept=".xlsx,.xls" required class="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 p-2">
                                 </div>
+                            </div>
+
+                            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-md">
+                                <label class="flex items-start cursor-pointer">
+                                    <input type="checkbox" name="update_existing_users" value="1" class="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                    <span class="ml-2">
+                                        <span class="block text-sm font-medium text-gray-900">Atualizar usuários existentes</span>
+                                        <span class="block text-xs text-yellow-800 mt-1">⚠️ <strong>Atenção:</strong> Se marcado, usuários que já existirem no sistema (verificado pelo RA) terão suas informações <strong>atualizadas</strong> com os dados da planilha. A senha será preservada.</span>
+                                    </span>
+                                </label>
                             </div>
 
                             <div class="flex gap-3">

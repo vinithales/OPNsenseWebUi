@@ -25,10 +25,11 @@ class UserImportService
      * Processar arquivo Excel e importar usuários
      *
      * @param string $filePath Caminho do arquivo Excel
-     * @param string $userType Tipo de usuário (aluno/professor)
+     * @param string $userType Tipo de usuário (aluno, professor, funcionario)
+     * @param bool $updateExistingUsers Se true, atualiza usuários que já existem
      * @return array Resultado da importação
      */
-    public function importFromExcel(string $filePath, string $userType = User::TYPE_ALUNO): array
+    public function importFromExcel(string $filePath, string $userType = User::TYPE_ALUNO, bool $updateExistingUsers = false): array
     {
         try {
             $spreadsheet = IOFactory::load($filePath);
@@ -52,6 +53,13 @@ class UserImportService
 
                 $ra = trim($row[0] ?? '');
                 $fullname = trim($row[1] ?? '');
+                $importar = strtoupper(trim($row[2] ?? '')); // Coluna "Importar"
+
+                // Ignora usuário se a coluna "Importar" for "N"
+                if ($importar === 'N') {
+                    Log::info("Usuário ignorado (coluna Importar = N)", ['linha' => $lineNumber, 'ra' => $ra]);
+                    continue;
+                }
 
                 // Validações
                 if (empty($ra)) {
@@ -64,13 +72,18 @@ class UserImportService
                     continue;
                 }
 
-                // Verifica duplicatas no OPNsense
-                // Como o RA é usado como 'name' (username), verificamos se já existe
+                // Verifica se usuário já existe no OPNsense
+                $existingUser = null;
+                $shouldUpdate = false;
                 try {
                     $existingUser = $this->opnsenseUserService->findUserByName($ra);
                     if ($existingUser) {
-                        $errors[] = "Linha {$lineNumber}: RA {$ra} já existe no sistema (usuário: {$existingUser['name']})";
-                        continue;
+                        if (!$updateExistingUsers) {
+                            $errors[] = "Linha {$lineNumber}: RA {$ra} já existe no sistema";
+                            continue;
+                        }
+                        $shouldUpdate = true;
+                        Log::info("Usuário já existe, será atualizado", ['ra' => $ra, 'linha' => $lineNumber]);
                     }
                 } catch (\Exception $e) {
                     // Se der erro na busca, continua (usuário não existe)
@@ -116,10 +129,20 @@ class UserImportService
                         ]
                     ];
 
-                    // Cria usuário no OPNsense
-                    $created = $this->opnsenseUserService->createUser($userData);
+                    // Cria ou atualiza usuário no OPNsense
+                    $success = false;
+                    if ($shouldUpdate && $existingUser) {
+                        // Atualiza usuário existente
+                        $userId = $existingUser['uuid'] ?? $existingUser['uid'];
+                        $success = $this->opnsenseUserService->updateUser($userId, $userData);
+                        Log::info("Usuário atualizado", ['ra' => $ra, 'userId' => $userId]);
+                    } else {
+                        // Cria novo usuário
+                        $success = $this->opnsenseUserService->createUser($userData);
+                        Log::info("Usuário criado", ['ra' => $ra]);
+                    }
 
-                    if ($created) {
+                    if ($success) {
                         $imported[] = [
                             'ra' => $ra,
                             'fullname' => $fullname,

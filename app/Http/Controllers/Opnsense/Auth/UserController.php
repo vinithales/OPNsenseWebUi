@@ -60,8 +60,12 @@ class UserController extends Controller
                 return redirect()->route('users.index')->with('error', 'User not found');
             }
 
+            // Extrai RA e recovery_code do comment (prioriza comment, pois é onde está vindo)
+            $commentValue = $user['comment'] ?? $user['descr'] ?? '';
+            $metadata = $this->userService->parseComment($commentValue);
+            $user['ra'] = $metadata['ra'] ?? '';
+            $user['recovery_code'] = $metadata['codigo'] ?? '';
             $user['uuid'] = $uuid;
-
 
             return view('users.show', compact('user', 'group'));
         } catch (\Exception $e) {
@@ -206,7 +210,9 @@ class UserController extends Controller
                 'groups' => 'nullable|array',
                 'groups.*' => 'string',
                 'priv' => 'nullable|array',
-                'priv.*' => 'string'
+                'priv.*' => 'string',
+                'ra' => 'nullable|string|max:50',
+                'recovery_code' => 'nullable|string|max:100'
             ]);
 
             // Validar se os grupos informados existem e converter para GIDs
@@ -214,47 +220,34 @@ class UserController extends Controller
             if (isset($validated['groups']) && !empty($validated['groups'])) {
                 try {
                     $availableGroups = $this->groupService->getGroups(false); // Sem contagem de membros
-
-                    Log::info('DEBUG - Resposta do GroupService:', [
-                        'total_groups' => count($availableGroups),
-                        'first_3_groups' => array_slice($availableGroups, 0, 3)
-                    ]);
-
                     $groupNames = array_column($availableGroups, 'name');
-
-                    Log::info('Grupos disponíveis no sistema:', $groupNames);
-                    Log::info('Grupos solicitados para o usuário:', $validated['groups']);
-
                     foreach ($validated['groups'] as $groupName) {
                         if (!in_array($groupName, $groupNames)) {
-                            Log::warning("Grupo inválido: {$groupName}. Grupos disponíveis: " . implode(', ', $groupNames));
                             return back()->withErrors(['groups' => "O grupo '{$groupName}' não existe no sistema."])->withInput();
                         }
-
-                        // Encontrar o GID do grupo
                         foreach ($availableGroups as $group) {
-                            if (isset($group['name']) && $group['name'] === $groupName) {
-                                if (isset($group['gid'])) {
-                                    $groupGIDs[] = $group['gid'];
-                                } else {
-                                    Log::warning("Grupo encontrado mas sem GID: " . json_encode($group));
-                                }
+                            if (isset($group['name']) && $group['name'] === $groupName && isset($group['gid'])) {
+                                $groupGIDs[] = $group['gid'];
                                 break;
                             }
                         }
                     }
-
-                    Log::info('Grupos convertidos para GIDs:', [
-                        'nomes' => $validated['groups'],
-                        'gids' => $groupGIDs
-                    ]);
-
-                } catch (\Exception $e) {
-                    Log::error('Erro ao buscar grupos: ' . $e->getMessage());
-                    Log::error('Stack trace: ' . $e->getTraceAsString());
-                    // Continua sem validação se não conseguir buscar grupos
-                }
+                } catch (\Exception $e) {}
             }
+
+            // Monta o campo comment para salvar RA e recovery_code
+            $commentParts = [];
+            if (!empty($validated['ra'])) {
+                $commentParts[] = "RA: {$validated['ra']}";
+            }
+            if (!empty($validated['recovery_code'])) {
+                $commentParts[] = "Código: {$validated['recovery_code']}";
+            }
+            if (!empty($validated['descr'])) {
+                $commentParts[] = $validated['descr'];
+            }
+            $commentParts[] = "Atualizado: " . now()->format('Y-m-d H:i:s');
+            $comment = implode(' | ', $commentParts);
 
             $userData = [
                 'user' => [
@@ -264,7 +257,7 @@ class UserController extends Controller
                     'scrambled_password' => '0',
                     'descr' => $validated['descr'] ?? '',
                     'email' => $validated['email'] ?? '',
-                    'comment' => 'Usuário atualizado via API',
+                    'comment' => $comment,
                     'landing_page' => '',
                     'language' => $validated['language'] ?? '',
                     'shell' => $validated['shell'] ?? '',
@@ -277,15 +270,9 @@ class UserController extends Controller
                 ]
             ];
 
-            // Filtrar valores vazios dentro do array user
             $userData['user'] = array_filter($userData['user'], function ($value) {
                 return $value !== null && $value !== '';
             });
-
-            Log::info('Dados do usuário que serão enviados para atualização:', [
-                'uuid' => $uuid,
-                'userData' => $userData
-            ]);
 
             if ($this->userService->updateUser($uuid, $userData)) {
                 return redirect()->route('users.index')
@@ -294,12 +281,9 @@ class UserController extends Controller
 
             return redirect()->route('users.index')->with('error', 'Erro ao atualizar usuário');
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar usuário: ' . $e->getMessage());
-
             if (request()->wantsJson()) {
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
             }
-
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
@@ -348,9 +332,10 @@ class UserController extends Controller
 
             $file = $request->file('excel_file');
             $userType = $request->input('user_type');
+            $updateExistingUsers = $request->input('update_existing_users', false);
 
             // Processa importação
-            $result = $this->importService->importFromExcel($file->getRealPath(), $userType);
+            $result = $this->importService->importFromExcel($file->getRealPath(), $userType, $updateExistingUsers);
 
             if ($result['success']) {
                 // Armazena credenciais na sessão para geração de PDF
@@ -688,9 +673,10 @@ class UserController extends Controller
 
             // Verifica se deve criar grupos automaticamente
             $createGroups = $request->input('create_groups', false);
+            $updateExistingUsers = $request->input('update_existing_users', false);
 
             // Processa importação
-            $result = $this->facultyImportService->importFromExcel($filePath, $createGroups);
+            $result = $this->facultyImportService->importFromExcel($filePath, $createGroups, $updateExistingUsers);
 
             // Se houver grupos ausentes e não foi confirmada a criação, pede confirmação
             if (!empty($result['missing_groups']) && !$createGroups) {
@@ -759,7 +745,7 @@ class UserController extends Controller
             }
 
             // Processa importação criando grupos automaticamente
-            $result = $this->facultyImportService->importFromExcel($tempFile, true);
+            $result = $this->facultyImportService->importFromExcel($tempFile, true, false);
 
             // Limpa arquivo temporário
             if (file_exists($tempFile)) {

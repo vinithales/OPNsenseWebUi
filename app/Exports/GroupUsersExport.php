@@ -33,11 +33,9 @@ class GroupUsersExport implements FromArray, WithHeadings, WithStyles, WithTitle
     public function headings(): array
     {
         return [
-            'RA',
             'Nome de Usuário',
             'Nome Completo',
             'Email',
-            'Tipo',
             'Grupo',
             'Status',
         ];

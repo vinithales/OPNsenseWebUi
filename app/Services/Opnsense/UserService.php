@@ -205,13 +205,14 @@ class UserService extends BaseService
      * Formato esperado: "RA: 123456 | Tipo: aluno | ..."
      *
      * @param string $comment
-     * @return array ['ra' => '123456', 'user_type' => 'aluno']
+     * @return array ['ra' => '123456', 'user_type' => 'aluno', 'codigo' => '6229ufi']
      */
     public function parseComment($comment)
     {
         $data = [
             'ra' => null,
             'user_type' => null,
+            'codigo' => null,
         ];
 
         if (empty($comment)) {
@@ -226,6 +227,11 @@ class UserService extends BaseService
         // Extrai Tipo
         if (preg_match('/Tipo:\s*([^\|]+)/', $comment, $matches)) {
             $data['user_type'] = trim($matches[1]);
+        }
+
+        // Extrai Código (suporta acento e variação de espaço)
+        if (preg_match('/Código:\s*([^\|]+)/u', $comment, $matches)) {
+            $data['codigo'] = trim($matches[1]);
         }
 
         return $data;
@@ -243,6 +249,7 @@ class UserService extends BaseService
             $metadata = $this->parseComment($user['descr'] ?? $user['comment'] ?? '');
             $user['ra'] = $metadata['ra'];
             $user['user_type'] = $metadata['user_type'];
+            $user['codigo'] = $metadata['codigo'];
         }
 
         return $users;

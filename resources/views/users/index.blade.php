@@ -123,11 +123,7 @@
                         </select>
                     </div>
 
-                    <div class="relative">
-                        <select id="filter-group" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                            <option value="">Todos os Grupos</option>
-                        </select>
-                    </div>
+                    
 
                     <div class="relative">
                         <select id="filter-status" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
@@ -213,42 +209,12 @@
 
     <script>
         let allUsers = []; // Armazena todos os usuários para filtragem
-        let allGroups = []; // Armazena todos os grupos
         let currentPage = 1;
         let pageSize = 10;
         let currentUsersList = [];
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Carrega os grupos para o filtro
-            fetchGroups();
-
-            // Função para buscar grupos
-            async function fetchGroups() {
-                try {
-                    const response = await fetch('api/groups');
-                    const data = await response.json();
-
-                    if (data.status === 'success') {
-                        allGroups = data.data;
-                        populateGroupFilter();
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar grupos:', error);
-                }
-            }
-
-            // Popula o filtro de grupos
-            function populateGroupFilter() {
-                const groupFilter = document.getElementById('filter-group');
-                groupFilter.innerHTML = '<option value="">Todos os Grupos</option>';
-
-                allGroups.forEach(group => {
-                    const option = document.createElement('option');
-                    option.value = group.name.toLowerCase();
-                    option.textContent = group.name;
-                    groupFilter.appendChild(option);
-                });
-            }
+            
 
             // Função para buscar usuários da API
             async function fetchUsers() {
@@ -478,7 +444,7 @@
             function applyFilters() {
                 const searchTerm = document.getElementById('search-input').value.toLowerCase();
                 const filterAccessLevel = document.getElementById('filter-access-level').value;
-                const filterGroup = document.getElementById('filter-group').value;
+                // filtro de grupo removido
                 const filterStatus = document.getElementById('filter-status').value;
 
                 const filteredUsers = allUsers.filter(user => {
@@ -503,12 +469,8 @@
                         }
                     }
 
-                    // Filtro de grupo
-                    let matchesGroup = true;
-                    if (filterGroup) {
-                        const userGroups = (user.group_memberships || '').toLowerCase();
-                        matchesGroup = userGroups.includes(filterGroup);
-                    }
+                    // Filtro de grupo removido
+                    const matchesGroup = true;
 
                     // Filtro de status
                     let matchesStatus = true;
@@ -521,7 +483,7 @@
                         }
                     }
 
-                    return matchesSearch && matchesAccessLevel && matchesGroup && matchesStatus;
+                    return matchesSearch && matchesAccessLevel && matchesStatus;
                 });
 
                 currentPage = 1;
@@ -532,7 +494,7 @@
             // Event listeners para os filtros
             document.getElementById('search-input').addEventListener('input', () => { currentPage = 1; applyFilters(); });
             document.getElementById('filter-access-level').addEventListener('change', () => { currentPage = 1; applyFilters(); });
-            document.getElementById('filter-group').addEventListener('change', () => { currentPage = 1; applyFilters(); });
+            // filtro de grupo removido
             document.getElementById('filter-status').addEventListener('change', () => { currentPage = 1; applyFilters(); });
 
             // Aplicar ação em massa
@@ -558,13 +520,18 @@
                             await resp.json();
                         } catch (e) { console.error('Erro ao excluir', id, e); }
                     }
+                    // Recarrega a listagem após ação em massa
                     await fetchUsers();
+                    applyFilters();
+                    // Opcional: recarrega a página completa para estado limpo
+                    // location.reload();
                 }
             });
 
             fetchUsers();
 
-            setInterval(fetchUsers, 10000);
+            // Atualização automática da listagem a cada 1 minuto
+            setInterval(async () => { await fetchUsers(); applyFilters(); }, 60000);
         });
 
         function deleteUser(userId) {

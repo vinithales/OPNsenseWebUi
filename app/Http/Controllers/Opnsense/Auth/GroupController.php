@@ -248,21 +248,54 @@ class GroupController extends Controller
                 return back()->with('error', 'Nenhum usuário encontrado no grupo "' . $group['name'] . '"');
             }
 
-            // Prepara dados para exportação
+            // Prepara dados para exportação com preenchimento inteligente dos campos
             $exportData = array_map(function($user) use ($group) {
+                // Fallbacks e normalizações
+                $comment = $user['descr'] ?? $user['comment'] ?? '';
+
+                // Nome de Usuário: prioriza 'name'
+                $username = $user['name'] ?? '';
+                
+
+                // Nome Completo: prioriza 'fullname'; se vazio, tenta 'descr'/'comment'
+                $fullname = $user['fullname'] ?? '';
+                if (empty($fullname)) {
+                    $fullname = $comment ?: '';
+                }
+
+                // Email: usa 'email' se disponível; caso contrário, vazio
+                $email = $user['email'] ?? '';
+
+
+                // Status
+                $status = !empty($user['disabled']) ? 'Inativo' : 'Ativo';
+
                 return [
-                    'RA' => $user['ra'] ?? 'N/A',
-                    'Nome de Usuário' => $user['name'] ?? '',
-                    'Nome Completo' => $user['fullname'] ?? '',
-                    'Email' => $user['email'] ?? '',
-                    'Tipo' => $user['user_type'] ?? 'N/A',
+                    'Nome de Usuário' => $username,
+                    'Nome Completo' => $fullname,
+                    'Email' => $email,
                     'Grupo' => $group['name'],
-                    'Status' => !empty($user['disabled']) ? 'Inativo' : 'Ativo',
+                    'Status' => $status,
                 ];
             }, $groupUsers);
 
             // Nome do arquivo com o nome do grupo e data
             $filename = 'usuarios_grupo_' . str_replace(' ', '_', strtolower($group['name'])) . '_' . date('Y-m-d_His') . '.xlsx';
+
+            // Log de amostra dos dados exportados para diagnóstico
+            if (!empty($exportData)) {
+                $sampleList = array_values($exportData);
+                $sample = $sampleList[0] ?? [];
+                $firstUser = reset($groupUsers);
+                Log::debug('Amostra de linha de exportação', [
+                    'Nome de Usuário' => $sample['Nome de Usuário'] ?? null,
+                    'Nome Completo' => $sample['Nome Completo'] ?? null,
+                    'Email' => $sample['Email'] ?? null,
+                    'Grupo' => $sample['Grupo'] ?? null,
+                    'Status' => $sample['Status'] ?? null,
+                    'Comment' => $firstUser['comment'] ?? ($firstUser['descr'] ?? null),
+                ]);
+            }
 
             return Excel::download(new GroupUsersExport($exportData, $group['name']), $filename);
 

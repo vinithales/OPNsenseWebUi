@@ -24,9 +24,10 @@ class FacultyUserImportService
      *
      * @param string $filePath Caminho do arquivo Excel
      * @param bool $createMissingGroups Se true, cria grupos que não existem
+     * @param bool $updateExistingUsers Se true, atualiza usuários que já existem
      * @return array Resultado da importação
      */
-    public function importFromExcel(string $filePath, bool $createMissingGroups = false): array
+    public function importFromExcel(string $filePath, bool $createMissingGroups = false, bool $updateExistingUsers = false): array
     {
         try {
             $spreadsheet = IOFactory::load($filePath);
@@ -54,6 +55,13 @@ class FacultyUserImportService
                 $grupo = trim($row[2] ?? '');
                 $login = trim($row[3] ?? '');
                 $senhaColuna = trim($row[4] ?? ''); // Coluna "Senha" do Excel
+                $importar = strtoupper(trim($row[5] ?? '')); // Coluna "Importar"
+
+                // Ignora usuário se a coluna "Importar" for "N"
+                if ($importar === 'N') {
+                    Log::info("Usuário ignorado (coluna Importar = N)", ['linha' => $lineNumber, 'ra' => $ra, 'nome' => $nome]);
+                    continue;
+                }
 
                 // Validações
                 if (empty($ra)) {
@@ -79,12 +87,18 @@ class FacultyUserImportService
                 // Gera senha baseada no RA (usa a senha padrão gerada)
                 $senha = $this->generatePasswordFromRA($ra);
 
-                // Verifica duplicatas no OPNsense (por login)
+                // Verifica se usuário já existe no OPNsense (por login)
+                $existingUser = null;
+                $shouldUpdate = false;
                 try {
                     $existingUser = $this->opnsenseUserService->findUserByName($login);
                     if ($existingUser) {
-                        $errors[] = "Linha {$lineNumber}: Login '{$login}' já existe no sistema";
-                        continue;
+                        if (!$updateExistingUsers) {
+                            $errors[] = "Linha {$lineNumber}: Login '{$login}' já existe no sistema";
+                            continue;
+                        }
+                        $shouldUpdate = true;
+                        Log::info("Usuário já existe, será atualizado", ['login' => $login, 'linha' => $lineNumber]);
                     }
                 } catch (\Exception $e) {
                     Log::debug("Verificação de login duplicado: " . $e->getMessage());
@@ -153,10 +167,20 @@ class FacultyUserImportService
                         ]
                     ];
 
-                    // Cria usuário no OPNsense
-                    $created = $this->opnsenseUserService->createUser($userData);
+                    // Cria ou atualiza usuário no OPNsense
+                    $success = false;
+                    if ($shouldUpdate && $existingUser) {
+                        // Atualiza usuário existente
+                        $userId = $existingUser['uuid'] ?? $existingUser['uid'];
+                        $success = $this->opnsenseUserService->updateUser($userId, $userData);
+                        Log::info("Usuário atualizado", ['login' => $login, 'userId' => $userId]);
+                    } else {
+                        // Cria novo usuário
+                        $success = $this->opnsenseUserService->createUser($userData);
+                        Log::info("Usuário criado", ['login' => $login]);
+                    }
 
-                    if ($created) {
+                    if ($success) {
                         $imported[] = [
                             'ra' => $ra,
                             'nome' => $nome,
